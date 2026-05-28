@@ -13,7 +13,7 @@ const TabsList = React.forwardRef<
   <TabsPrimitive.List
     ref={ref}
     className={cn(
-      'inline-flex items-center gap-1 rounded-full bg-[var(--surface-container)] p-1',
+      'inline-flex items-center gap-0.5 rounded-full bg-[var(--surface-container)] p-1',
       className
     )}
     {...props}
@@ -28,8 +28,13 @@ const TabsTrigger = React.forwardRef<
   <TabsPrimitive.Trigger
     ref={ref}
     className={cn(
-      'inline-flex items-center justify-center whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium text-[var(--on-surface-variant)] transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)] disabled:pointer-events-none disabled:opacity-50',
-      'data-[state=active]:bg-[var(--surface-container-lowest)] data-[state=active]:text-[var(--primary)] data-[state=active]:shadow-sm',
+      'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-full',
+      'px-4 py-2 text-sm font-medium tracking-[0.1px]',
+      'text-[var(--on-surface-variant)] transition-all duration-150',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]',
+      'disabled:pointer-events-none disabled:opacity-40',
+      'hover:text-[var(--on-surface)] hover:bg-[var(--surface-container-high)]',
+      'data-[state=active]:bg-[var(--surface-container-lowest)] data-[state=active]:text-[var(--primary)] data-[state=active]:font-semibold data-[state=active]:shadow-[var(--shadow-1)]',
       className
     )}
     {...props}
@@ -44,7 +49,8 @@ const TabsContent = React.forwardRef<
   <TabsPrimitive.Content
     ref={ref}
     className={cn(
-      'mt-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]',
+      'mt-4 animate-fade-in',
+      'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--primary)]',
       className
     )}
     {...props}

@@ -49,17 +49,21 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-7">
       <div>
-        <h2 className="text-2xl font-bold text-[var(--on-surface)]">Welcome back</h2>
-        <p className="mt-1 text-sm text-[var(--on-surface-variant)]">
+        <h2 className="text-2xl font-bold tracking-[-0.3px] text-[var(--on-surface)]">
+          Welcome back
+        </h2>
+        <p className="mt-1.5 text-sm text-[var(--on-surface-variant)]">
           Sign in to access the family vault
         </p>
       </div>
 
-      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
         <div className="space-y-1.5">
-          <Label htmlFor="email">Email</Label>
+          <Label htmlFor="email" className="text-sm font-medium text-[var(--on-surface-variant)]">
+            Email address
+          </Label>
           <Input
             id="email"
             type="email"
@@ -68,16 +72,20 @@ export default function LoginPage() {
             {...register('email')}
           />
           {errors.email && (
-            <p className="text-xs text-[var(--error)]">{errors.email.message}</p>
+            <p className="text-xs text-[var(--error)] flex items-center gap-1.5 mt-1">
+              {errors.email.message}
+            </p>
           )}
         </div>
 
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-sm font-medium text-[var(--on-surface-variant)]">
+              Password
+            </Label>
             <Link
               href="/forgot-password"
-              className="text-xs text-[var(--primary)] hover:underline"
+              className="text-xs text-[var(--primary)] hover:underline font-medium"
             >
               Forgot password?
             </Link>
@@ -88,29 +96,38 @@ export default function LoginPage() {
               type={showPassword ? 'text' : 'password'}
               placeholder="••••••••"
               autoComplete="current-password"
-              className="pr-10"
+              className="pr-11"
               {...register('password')}
             />
             <button
               type="button"
               onClick={() => setShowPassword((s) => !s)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--on-surface-muted)] hover:text-[var(--on-surface-variant)]"
+              aria-label={showPassword ? 'Hide password' : 'Show password'}
+              className={[
+                'absolute right-3 top-1/2 -translate-y-1/2',
+                'w-7 h-7 flex items-center justify-center rounded-full',
+                'text-[var(--on-surface-muted)] hover:text-[var(--on-surface-variant)]',
+                'hover:bg-[var(--surface-container)] transition-colors duration-150',
+              ].join(' ')}
             >
-              {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+              {showPassword
+                ? <EyeOff className="w-4 h-4" />
+                : <Eye className="w-4 h-4" />
+              }
             </button>
           </div>
           {errors.password && (
-            <p className="text-xs text-[var(--error)]">{errors.password.message}</p>
+            <p className="text-xs text-[var(--error)] mt-1">{errors.password.message}</p>
           )}
         </div>
 
         {serverError && (
-          <div className="rounded-[var(--radius-md)] bg-[var(--error-container)] p-3 text-sm text-[var(--on-error-container)]">
+          <div className="rounded-[var(--radius-lg)] bg-[var(--error-container)] border border-[var(--error)]/20 px-4 py-3 text-sm text-[var(--on-error-container)]">
             {serverError}
           </div>
         )}
 
-        <Button type="submit" className="w-full" disabled={isSubmitting}>
+        <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
           {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
           Sign in
         </Button>
@@ -118,7 +135,7 @@ export default function LoginPage() {
 
       <p className="text-center text-sm text-[var(--on-surface-variant)]">
         Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-[var(--primary)] font-medium hover:underline">
+        <Link href="/signup" className="text-[var(--primary)] font-semibold hover:underline">
           Sign up
         </Link>
       </p>

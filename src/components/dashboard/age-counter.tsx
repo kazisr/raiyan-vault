@@ -4,55 +4,73 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { calculateAge } from '@/utils/age'
 import { CHILD_DOB, CHILD_NICKNAME } from '@/constants/child'
-import { Card, CardContent } from '@/components/ui/card'
 
 export function AgeCounter() {
   const [age, setAge] = useState(() => calculateAge(CHILD_DOB))
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setAge(calculateAge(CHILD_DOB))
-    }, 60_000)
+    const interval = setInterval(() => setAge(calculateAge(CHILD_DOB)), 60_000)
     return () => clearInterval(interval)
   }, [])
 
   return (
-    <Card className="relative overflow-hidden bg-gradient-to-br from-[var(--primary-container)] to-[var(--secondary-container)] border-0">
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white translate-x-8 -translate-y-8" />
-        <div className="absolute bottom-0 left-0 w-24 h-24 rounded-full bg-white -translate-x-6 translate-y-6" />
-      </div>
-      <CardContent className="pt-5 relative z-10">
-        <p className="text-xs font-medium text-[var(--on-primary-container)]/70 uppercase tracking-wider mb-2">
+    <div className="relative overflow-hidden rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--primary)] via-[var(--primary-container)] to-[var(--secondary-container)] p-6 sm:p-7">
+      {/* Decorative shapes */}
+      <div
+        className="absolute -top-6 -right-6 w-32 h-32 rounded-full bg-white/10 blur-sm"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute -bottom-8 -left-4 w-28 h-28 rounded-full bg-white/10 blur-sm"
+        aria-hidden="true"
+      />
+      <div
+        className="absolute top-1/2 right-1/4 w-16 h-16 rounded-full bg-white/5"
+        aria-hidden="true"
+      />
+
+      <div className="relative z-10">
+        <p className="text-xs font-semibold text-[var(--on-primary-container)]/70 uppercase tracking-widest mb-3">
           {CHILD_NICKNAME} is
         </p>
+
         <motion.div
           key={age.label}
-          initial={{ scale: 0.95, opacity: 0 }}
+          initial={{ scale: 0.96, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
-          className="space-y-1"
+          transition={{ duration: 0.3, ease: [0.2, 0, 0, 1] }}
+          className="space-y-3"
         >
-          <div className="flex items-end gap-4 flex-wrap">
+          <div className="flex items-end gap-5 flex-wrap">
             {age.years > 0 && (
-              <div className="text-center">
-                <span className="text-3xl sm:text-4xl font-bold text-[var(--on-primary-container)]">{age.years}</span>
-                <span className="text-sm text-[var(--on-primary-container)]/70 block">years</span>
-              </div>
+              <AgeUnit value={age.years} label="years" />
             )}
-            <div className="text-center">
-              <span className="text-3xl sm:text-4xl font-bold text-[var(--on-primary-container)]">{age.months}</span>
-              <span className="text-sm text-[var(--on-primary-container)]/70 block">months</span>
-            </div>
-            <div className="text-center">
-              <span className="text-3xl sm:text-4xl font-bold text-[var(--on-primary-container)]">{age.days}</span>
-              <span className="text-sm text-[var(--on-primary-container)]/70 block">days</span>
-            </div>
+            <AgeUnit value={age.months} label="months" />
+            <AgeUnit value={age.days} label="days" />
           </div>
-          <p className="text-xs text-[var(--on-primary-container)]/60">
-            {age.totalDays} days since birth
-          </p>
+
+          <div className="flex items-center gap-2">
+            <div className="h-px flex-1 bg-[var(--on-primary-container)]/20" />
+            <p className="text-xs font-medium text-[var(--on-primary-container)]/60 px-1">
+              {age.totalDays.toLocaleString()} days since birth
+            </p>
+            <div className="h-px flex-1 bg-[var(--on-primary-container)]/20" />
+          </div>
         </motion.div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
+  )
+}
+
+function AgeUnit({ value, label }: { value: number; label: string }) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="text-4xl sm:text-5xl font-bold text-[var(--on-primary-container)] tabular-nums leading-none">
+        {value}
+      </span>
+      <span className="text-xs font-medium text-[var(--on-primary-container)]/65 tracking-wide uppercase">
+        {label}
+      </span>
+    </div>
   )
 }

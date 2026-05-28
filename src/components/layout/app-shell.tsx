@@ -22,6 +22,8 @@ export function AppShell({ children }: AppShellProps) {
     return () => mq.removeEventListener('change', handler)
   }, [])
 
+  const sidebarWidth = isMd ? (collapsed ? 72 : 260) : 0
+
   return (
     <div className="min-h-screen bg-[var(--background)]">
       {/* Desktop sidebar */}
@@ -29,17 +31,20 @@ export function AppShell({ children }: AppShellProps) {
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       </div>
 
-      {/* Mobile sidebar — rendered at root level, outside any backdrop-filter ancestor */}
+      {/* Mobile sidebar — rendered outside any backdrop-filter ancestor */}
       <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
 
-      {/* Main content */}
+      {/* Main content area */}
       <div
-        className="transition-all duration-300 min-h-screen flex flex-col"
-        style={{ marginLeft: isMd ? (collapsed ? 64 : 240) : 0 }}
+        className={cn('min-h-screen flex flex-col', 'transition-[margin-left] duration-300 ease-[var(--motion-emphasized)]')}
+        style={{ marginLeft: sidebarWidth }}
       >
         <Topbar onMobileMenuOpen={() => setMobileOpen(true)} />
-        <main className="flex-1 p-3 sm:p-4 md:p-6 page-enter">
-          {children}
+
+        <main className="flex-1 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 page-enter">
+          <div className="mx-auto w-full max-w-6xl">
+            {children}
+          </div>
         </main>
       </div>
     </div>

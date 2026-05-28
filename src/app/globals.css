@@ -1,7 +1,7 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Flex:opsz,wght@8..144,300;8..144,400;8..144,500;8..144,600;8..144,700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 @import "tailwindcss";
 
-/* ── Material Design 3 inspired token system ─────────────────────────────── */
+/* ── Material Design 3 token system ──────────────────────────────────────── */
 :root {
   /* Surface */
   --surface: #FEFBF7;
@@ -49,24 +49,31 @@
   --on-surface-muted: #7A746C;
   --background: #FEFBF7;
 
-  /* Functional */
+  /* Shape scale (MD3 inspired) */
   --radius-xs: 4px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
-  --radius-xl: 24px;
+  --radius-xl: 20px;
+  --radius-2xl: 28px;
   --radius-full: 9999px;
 
   /* Elevation shadows */
   --shadow-1: 0 1px 2px rgba(0,0,0,0.08), 0 1px 3px 1px rgba(0,0,0,0.04);
-  --shadow-2: 0 1px 2px rgba(0,0,0,0.06), 0 2px 6px 2px rgba(0,0,0,0.06);
-  --shadow-3: 0 1px 3px rgba(0,0,0,0.06), 0 4px 8px 3px rgba(0,0,0,0.08);
-  --shadow-4: 0 2px 3px rgba(0,0,0,0.06), 0 6px 10px 4px rgba(0,0,0,0.08);
+  --shadow-2: 0 1px 2px rgba(0,0,0,0.06), 0 2px 6px 2px rgba(0,0,0,0.08);
+  --shadow-3: 0 1px 3px rgba(0,0,0,0.06), 0 4px 8px 3px rgba(0,0,0,0.10);
+  --shadow-4: 0 2px 3px rgba(0,0,0,0.06), 0 6px 10px 4px rgba(0,0,0,0.12);
 
-  /* Transitions */
+  /* Transition easings */
   --motion-standard: cubic-bezier(0.2, 0, 0, 1);
   --motion-decelerate: cubic-bezier(0, 0, 0, 1);
   --motion-accelerate: cubic-bezier(0.3, 0, 1, 1);
+  --motion-emphasized: cubic-bezier(0.2, 0, 0, 1);
+
+  /* State layer opacities */
+  --state-hover: 0.08;
+  --state-focus: 0.12;
+  --state-pressed: 0.12;
 }
 
 [data-theme="dark"] {
@@ -109,7 +116,7 @@
 }
 
 /* ── Global base styles ───────────────────────────────────────────────────── */
-* {
+*, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -119,36 +126,31 @@ html {
   scroll-behavior: smooth;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   background: var(--background);
   color: var(--on-surface);
-  font-family: 'Inter', 'Roboto Flex', system-ui, sans-serif;
-  min-height: 100vh;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 14px;
   line-height: 1.6;
+  min-height: 100vh;
 }
 
 /* ── Scrollbar ────────────────────────────────────────────────────────────── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: transparent;
-}
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: var(--outline-variant);
   border-radius: var(--radius-full);
 }
-::-webkit-scrollbar-thumb:hover {
-  background: var(--outline);
-}
+::-webkit-scrollbar-thumb:hover { background: var(--outline); }
 
 /* ── Focus ring ───────────────────────────────────────────────────────────── */
 :focus-visible {
   outline: 2px solid var(--primary);
-  outline-offset: 2px;
+  outline-offset: 3px;
   border-radius: var(--radius-xs);
 }
 
@@ -158,7 +160,7 @@ body {
   color: var(--on-primary-container);
 }
 
-/* ── Tailwind v4 theme overrides ─────────────────────────────────────────── */
+/* ── Tailwind v4 theme tokens ────────────────────────────────────────────── */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -172,38 +174,88 @@ body {
   --color-error: var(--error);
   --color-outline: var(--outline);
   --color-outline-variant: var(--outline-variant);
-  --font-sans: 'Inter', 'Roboto Flex', system-ui, sans-serif;
-  --radius-sm: var(--radius-sm);
-  --radius-md: var(--radius-md);
-  --radius-lg: var(--radius-lg);
+  --font-sans: 'Inter', system-ui, sans-serif;
 }
 
-/* ── Utility classes ─────────────────────────────────────────────────────── */
+/* ── Surface utilities ───────────────────────────────────────────────────── */
 .surface { background: var(--surface); }
 .surface-low { background: var(--surface-container-low); }
 .surface-container { background: var(--surface-container); }
 .surface-high { background: var(--surface-container-high); }
 .surface-highest { background: var(--surface-container-highest); }
 
+/* ── Text utilities ──────────────────────────────────────────────────────── */
 .text-on-surface { color: var(--on-surface); }
 .text-on-surface-variant { color: var(--on-surface-variant); }
 .text-on-surface-muted { color: var(--on-surface-muted); }
 
+/* ── Elevation ───────────────────────────────────────────────────────────── */
+.elevation-0 { box-shadow: none; }
 .elevation-1 { box-shadow: var(--shadow-1); }
 .elevation-2 { box-shadow: var(--shadow-2); }
 .elevation-3 { box-shadow: var(--shadow-3); }
+.elevation-4 { box-shadow: var(--shadow-4); }
 
+/* ── Radius utilities ────────────────────────────────────────────────────── */
 .rounded-md3 { border-radius: var(--radius-md); }
 .rounded-lg3 { border-radius: var(--radius-lg); }
 .rounded-xl3 { border-radius: var(--radius-xl); }
+.rounded-2xl3 { border-radius: var(--radius-2xl); }
 
-/* ── Page transitions ─────────────────────────────────────────────────────── */
+/* ── MD3 Typography scale ────────────────────────────────────────────────── */
+.display-large {
+  font-size: 57px; line-height: 64px; font-weight: 400; letter-spacing: -0.25px;
+}
+.display-medium {
+  font-size: 45px; line-height: 52px; font-weight: 400; letter-spacing: 0;
+}
+.display-small {
+  font-size: 36px; line-height: 44px; font-weight: 400; letter-spacing: 0;
+}
+.headline-large {
+  font-size: 32px; line-height: 40px; font-weight: 400; letter-spacing: 0;
+}
+.headline-medium {
+  font-size: 28px; line-height: 36px; font-weight: 400; letter-spacing: 0;
+}
+.headline-small {
+  font-size: 24px; line-height: 32px; font-weight: 400; letter-spacing: 0;
+}
+.title-large {
+  font-size: 22px; line-height: 28px; font-weight: 400; letter-spacing: 0;
+}
+.title-medium {
+  font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: 0.15px;
+}
+.title-small {
+  font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px;
+}
+.body-large {
+  font-size: 16px; line-height: 24px; font-weight: 400; letter-spacing: 0.5px;
+}
+.body-medium {
+  font-size: 14px; line-height: 20px; font-weight: 400; letter-spacing: 0.25px;
+}
+.body-small {
+  font-size: 12px; line-height: 16px; font-weight: 400; letter-spacing: 0.4px;
+}
+.label-large {
+  font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: 0.1px;
+}
+.label-medium {
+  font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px;
+}
+.label-small {
+  font-size: 11px; line-height: 16px; font-weight: 500; letter-spacing: 0.5px;
+}
+
+/* ── Page transitions ────────────────────────────────────────────────────── */
 .page-enter {
-  animation: fadeSlideUp 0.3s var(--motion-decelerate) forwards;
+  animation: fadeSlideUp 0.25s var(--motion-decelerate) both;
 }
 
 @keyframes fadeSlideUp {
-  from { opacity: 0; transform: translateY(12px); }
+  from { opacity: 0; transform: translateY(10px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
@@ -213,8 +265,13 @@ body {
 }
 
 @keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.96); }
+  from { opacity: 0; transform: scale(0.95); }
   to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInLeft {
+  from { opacity: 0; transform: translateX(-12px); }
+  to   { opacity: 1; transform: translateX(0); }
 }
 
 @keyframes shimmer {
@@ -222,9 +279,11 @@ body {
   100% { background-position: 200% 0; }
 }
 
-.animate-fade-in { animation: fadeIn 0.3s ease forwards; }
-.animate-scale-in { animation: scaleIn 0.25s var(--motion-decelerate) forwards; }
+.animate-fade-in { animation: fadeIn 0.25s ease both; }
+.animate-scale-in { animation: scaleIn 0.2s var(--motion-decelerate) both; }
+.animate-slide-in-left { animation: slideInLeft 0.25s var(--motion-decelerate) both; }
 
+/* ── Skeleton ────────────────────────────────────────────────────────────── */
 .skeleton {
   background: linear-gradient(
     90deg,
@@ -233,5 +292,40 @@ body {
     var(--surface-container) 75%
   );
   background-size: 200% 100%;
-  animation: shimmer 1.5s infinite;
+  animation: shimmer 1.4s infinite;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Interactive state layer ─────────────────────────────────────────────── */
+.state-layer {
+  position: relative;
+  isolation: isolate;
+}
+.state-layer::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: currentColor;
+  opacity: 0;
+  transition: opacity 150ms;
+  pointer-events: none;
+  z-index: 0;
+}
+.state-layer:hover::before { opacity: 0.08; }
+.state-layer:focus-visible::before { opacity: 0.12; }
+.state-layer:active::before { opacity: 0.12; }
+
+/* ── Responsive containers ───────────────────────────────────────────────── */
+.content-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  .content-grid { gap: 1.25rem; }
+}
+
+@media (min-width: 1024px) {
+  .content-grid { gap: 1.5rem; }
 }
