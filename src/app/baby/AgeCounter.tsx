@@ -1,17 +1,27 @@
 'use client'
 
+import dayjs from 'dayjs'
 import { useEffect, useState } from 'react'
 
 interface Props {
   dob: string
 }
 
-function getHMS(dob: string) {
-  const totalSeconds = Math.floor((Date.now() - new Date(dob).getTime()) / 1000)
+function getAge(dob: string) {
+  const birth = dayjs(dob)
+  const now = dayjs()
+
+  const years = now.diff(birth, 'year')
+  const months = now.diff(birth.add(years, 'year'), 'month')
+  const afterYearsMonths = birth.add(years, 'year').add(months, 'month')
+
+  const remainingMs = now.valueOf() - afterYearsMonths.valueOf()
+  const totalSeconds = Math.floor(remainingMs / 1000)
   const hours = Math.floor(totalSeconds / 3600)
   const minutes = Math.floor((totalSeconds % 3600) / 60)
   const seconds = totalSeconds % 60
-  return { hours, minutes, seconds }
+
+  return { years, months, hours, minutes, seconds }
 }
 
 function pad(n: number) {
@@ -19,33 +29,46 @@ function pad(n: number) {
 }
 
 export default function AgeCounter({ dob }: Props) {
-  const [hms, setHMS] = useState(() => getHMS(dob))
+  const [age, setAge] = useState(() => getAge(dob))
 
   useEffect(() => {
-    const id = setInterval(() => setHMS(getHMS(dob)), 1000)
+    const id = setInterval(() => setAge(getAge(dob)), 1000)
     return () => clearInterval(id)
   }, [dob])
 
   return (
-    <div className="mt-5 border-t border-white/20 pt-4">
-      <p className="text-xs font-semibold uppercase tracking-widest opacity-75 mb-3 text-center">
-        and counting
-      </p>
-      <div className="flex items-center justify-center gap-4 text-center">
-        <div>
-          <span className="text-4xl font-bold tabular-nums">{pad(hms.hours)}</span>
-          <span className="block text-xs opacity-75 mt-1">hours</span>
-        </div>
-        <span className="text-3xl font-bold opacity-50 -mt-3">:</span>
-        <div>
-          <span className="text-4xl font-bold tabular-nums">{pad(hms.minutes)}</span>
-          <span className="block text-xs opacity-75 mt-1">minutes</span>
-        </div>
-        <span className="text-3xl font-bold opacity-50 -mt-3">:</span>
-        <div>
-          <span className="text-4xl font-bold tabular-nums">{pad(hms.seconds)}</span>
-          <span className="block text-xs opacity-75 mt-1">seconds</span>
-        </div>
+    <div className="flex items-center justify-center gap-4 flex-wrap text-center">
+      {age.years > 0 && (
+        <>
+          <div>
+            <span className="text-5xl font-bold tabular-nums">{age.years}</span>
+            <span className="block text-sm opacity-75 mt-1">years</span>
+          </div>
+          <span className="text-3xl font-bold opacity-50 -mt-3">:</span>
+        </>
+      )}
+      {age.months > 0 && (
+        <>
+          <div>
+            <span className="text-5xl font-bold tabular-nums">{age.months}</span>
+            <span className="block text-sm opacity-75 mt-1">months</span>
+          </div>
+          <span className="text-3xl font-bold opacity-50 -mt-3">:</span>
+        </>
+      )}
+      <div>
+        <span className="text-5xl font-bold tabular-nums">{pad(age.hours)}</span>
+        <span className="block text-sm opacity-75 mt-1">hours</span>
+      </div>
+      <span className="text-3xl font-bold opacity-50 -mt-3">:</span>
+      <div>
+        <span className="text-5xl font-bold tabular-nums">{pad(age.minutes)}</span>
+        <span className="block text-sm opacity-75 mt-1">minutes</span>
+      </div>
+      <span className="text-3xl font-bold opacity-50 -mt-3">:</span>
+      <div>
+        <span className="text-5xl font-bold tabular-nums">{pad(age.seconds)}</span>
+        <span className="block text-sm opacity-75 mt-1">seconds</span>
       </div>
     </div>
   )
