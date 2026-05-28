@@ -27,7 +27,7 @@ export function Topbar() {
   )?.[1] ?? 'Raiyan\'s Vault'
 
   return (
-    <header className="sticky top-0 z-30 flex items-center gap-3 px-4 md:px-6 h-14 bg-[var(--surface)]/80 backdrop-blur-md border-b border-[var(--outline-variant)]/30">
+    <header className="sticky top-0 z-40 flex items-center gap-3 px-4 md:px-6 h-14 bg-[var(--surface)]/95 backdrop-blur-md border-b border-[var(--outline-variant)]/30">
       <div className="md:hidden">
         <MobileSidebar />
       </div>
