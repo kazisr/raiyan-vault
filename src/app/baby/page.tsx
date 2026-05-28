@@ -2,6 +2,7 @@ import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Heart, Camera, Star, Calendar, LogIn, Wallet } from 'lucide-react'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME, EVENT_TYPES } from '@/constants/child'
+import AgeCounter from './AgeCounter'
 import { calculateAge, formatDate } from '@/utils/age'
 import { formatCurrency } from '@/utils/currency'
 import type { Metadata } from 'next'
@@ -105,6 +106,8 @@ export default async function BabyPage() {
       <p className="text-xs opacity-60 mt-4 text-center">
         {age.totalDays} days since birth
       </p>
+
+      <AgeCounter dob={CHILD_DOB} />
     </div>
 
     {/* Stats */}
