@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Heart, Camera, Star, Calendar, LogIn, Wallet } from 'lucide-react'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME, EVENT_TYPES } from '@/constants/child'
 import AgeCounter from './AgeCounter'
-import { calculateAge, formatDate } from '@/utils/age'
+import { formatDate } from '@/utils/age'
 import { formatCurrency } from '@/utils/currency'
 import type { Metadata } from 'next'
 
@@ -51,8 +51,6 @@ export default async function BabyPage() {
     })
   )
 
-  const age = calculateAge(CHILD_DOB)
-
   const balances = (['JPY', 'BDT'] as const).map((currency) => {
     const rows = (ledgerEntries ?? []).filter((e) => e.currency === currency)
     const income = rows.filter((e) => e.type === 'income').reduce((s, e) => s + e.amount, 0)
@@ -80,34 +78,7 @@ export default async function BabyPage() {
   <main className="max-w-2xl mx-auto w-full px-4 pb-16 space-y-6">
     {/* Age card */}
     <div className="rounded-2xl bg-gradient-to-br from-[#5B7FA6] to-[#7B9EC0] p-6 text-white shadow-md">
-      <p className="text-xs font-semibold uppercase tracking-widest opacity-75 mb-3 text-center">
-        {CHILD_NICKNAME} is
-      </p>
-
-      <div className="flex items-center justify-center gap-6 flex-wrap text-center">
-        {age.years > 0 && (
-          <div className="text-center">
-            <span className="text-5xl font-bold">{age.years}</span>
-            <span className="block text-sm opacity-75 mt-1">years</span>
-          </div>
-        )}
-
-        <div className="text-center">
-          <span className="text-5xl font-bold">{age.months}</span>
-          <span className="block text-sm opacity-75 mt-1">months</span>
-        </div>
-
-        <div className="text-center">
-          <span className="text-5xl font-bold">{age.days}</span>
-          <span className="block text-sm opacity-75 mt-1">days</span>
-        </div>
-      </div>
-
-      <p className="text-xs opacity-60 mt-4 text-center">
-        {age.totalDays} days since birth
-      </p>
-
-      <AgeCounter dob={CHILD_DOB} />
+      <AgeCounter dob={CHILD_DOB} nickname={CHILD_NICKNAME} />
     </div>
 
     {/* Stats */}
