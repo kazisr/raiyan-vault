@@ -23,7 +23,7 @@ export function ProfileHeader({ name, dob, age, avatarUrl, bloodGroup }: Profile
     <motion.div
       initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
-      className="relative overflow-hidden rounded-[var(--radius-xl)] bg-gradient-to-br from-[var(--primary-container)] via-[var(--surface-container-low)] to-[var(--secondary-container)] p-6"
+      className="relative overflow-hidden rounded-[var(--radius-2xl)] bg-gradient-to-br from-[var(--primary-container)] via-[var(--surface-container-low)] to-[var(--secondary-container)] p-6 sm:p-7"
     >
       {/* Background decoration */}
       <div className="absolute top-0 right-0 w-48 h-48 rounded-full bg-white/10 translate-x-16 -translate-y-16" />

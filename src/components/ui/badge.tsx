@@ -3,16 +3,16 @@ import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/lib/utils'
 
 const badgeVariants = cva(
-  'inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors select-none',
+  'inline-flex items-center gap-1 rounded-full px-3 py-1 text-xs font-medium tracking-[0.1px] transition-colors select-none leading-none',
   {
     variants: {
       variant: {
-        default: 'bg-[var(--primary-container)] text-[var(--on-primary-container)]',
+        default:   'bg-[var(--primary-container)] text-[var(--on-primary-container)]',
         secondary: 'bg-[var(--secondary-container)] text-[var(--on-secondary-container)]',
-        tertiary: 'bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)]',
-        outline: 'border border-[var(--outline-variant)] text-[var(--on-surface-variant)]',
-        error: 'bg-[var(--error-container)] text-[var(--on-error-container)]',
-        surface: 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]',
+        tertiary:  'bg-[var(--tertiary-container)] text-[var(--on-tertiary-container)]',
+        outline:   'border border-[var(--outline-variant)] text-[var(--on-surface-variant)] bg-transparent',
+        error:     'bg-[var(--error-container)] text-[var(--on-error-container)]',
+        surface:   'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]',
       },
     },
     defaultVariants: {
