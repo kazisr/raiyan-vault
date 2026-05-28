@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
-import { Sidebar } from './sidebar'
+import { Sidebar, MobileSidebar } from './sidebar'
 import { Topbar } from './topbar'
 
 interface AppShellProps {
@@ -12,6 +12,7 @@ interface AppShellProps {
 export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [isMd, setIsMd] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)')
@@ -28,12 +29,15 @@ export function AppShell({ children }: AppShellProps) {
         <Sidebar collapsed={collapsed} onToggle={() => setCollapsed((c) => !c)} />
       </div>
 
+      {/* Mobile sidebar — rendered at root level, outside any backdrop-filter ancestor */}
+      <MobileSidebar open={mobileOpen} onClose={() => setMobileOpen(false)} />
+
       {/* Main content */}
       <div
         className="transition-all duration-300 min-h-screen flex flex-col"
         style={{ marginLeft: isMd ? (collapsed ? 64 : 240) : 0 }}
       >
-        <Topbar />
+        <Topbar onMobileMenuOpen={() => setMobileOpen(true)} />
         <main className="flex-1 p-3 sm:p-4 md:p-6 page-enter">
           {children}
         </main>

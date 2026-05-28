@@ -134,76 +134,86 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
   )
 }
 
-export function MobileSidebar() {
-  const [open, setOpen] = useState(false)
+interface MobileSidebarTriggerProps {
+  onOpen: () => void
+}
+
+export function MobileSidebarTrigger({ onOpen }: MobileSidebarTriggerProps) {
+  return (
+    <button
+      onClick={onOpen}
+      className="p-2 rounded-full hover:bg-[var(--surface-container)] transition-colors text-[var(--on-surface-variant)]"
+    >
+      <Menu className="w-5 h-5" />
+    </button>
+  )
+}
+
+interface MobileSidebarProps {
+  open: boolean
+  onClose: () => void
+}
+
+export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
   const pathname = usePathname()
 
   return (
-    <>
-      <button
-        onClick={() => setOpen(true)}
-        className="p-2 rounded-full hover:bg-[var(--surface-container)] transition-colors text-[var(--on-surface-variant)]"
-      >
-        <Menu className="w-5 h-5" />
-      </button>
-
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setOpen(false)}
-              className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
-            />
-            <motion.aside
-              initial={{ x: '-100%' }}
-              animate={{ x: 0 }}
-              exit={{ x: '-100%' }}
-              transition={{ type: 'spring', damping: 30, stiffness: 300 }}
-              className="fixed left-0 top-0 h-full w-64 z-50 flex flex-col bg-[var(--surface-container-low)] border-r border-[var(--outline-variant)]/50"
-            >
-              <div className="flex items-center gap-3 px-4 py-5 border-b border-[var(--outline-variant)]/40">
-                <div className="w-8 h-8 rounded-full bg-[var(--primary-container)] flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-[var(--primary)]" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-[var(--on-surface)]">{CHILD_NICKNAME}&apos;s Vault</p>
-                  <p className="text-xs text-[var(--on-surface-muted)]">Family Archive</p>
-                </div>
-                <button
-                  onClick={() => setOpen(false)}
-                  className="ml-auto p-1.5 rounded-full hover:bg-[var(--surface-container-high)] transition-colors"
-                >
-                  <X className="w-4 h-4 text-[var(--on-surface-variant)]" />
-                </button>
+    <AnimatePresence>
+      {open && (
+        <>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={onClose}
+            className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm"
+          />
+          <motion.aside
+            initial={{ x: '-100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '-100%' }}
+            transition={{ type: 'spring', damping: 30, stiffness: 300 }}
+            className="fixed left-0 top-0 h-full w-64 z-50 flex flex-col bg-[var(--surface-container-low)] border-r border-[var(--outline-variant)]/50"
+          >
+            <div className="flex items-center gap-3 px-4 py-5 border-b border-[var(--outline-variant)]/40">
+              <div className="w-8 h-8 rounded-full bg-[var(--primary-container)] flex items-center justify-center">
+                <Heart className="w-4 h-4 text-[var(--primary)]" />
               </div>
-              <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
-                {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
-                  const active = pathname === href || pathname.startsWith(href + '/')
-                  return (
-                    <Link
-                      key={href}
-                      href={href}
-                      onClick={() => setOpen(false)}
-                      className={cn(
-                        'flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors',
-                        active
-                          ? 'bg-[var(--primary-container)] text-[var(--on-primary-container)]'
-                          : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container)] hover:text-[var(--on-surface)]'
-                      )}
-                    >
-                      <Icon className={cn('w-5 h-5', active ? 'text-[var(--primary)]' : '')} />
-                      {label}
-                    </Link>
-                  )
-                })}
-              </nav>
-            </motion.aside>
-          </>
-        )}
-      </AnimatePresence>
-    </>
+              <div>
+                <p className="text-sm font-semibold text-[var(--on-surface)]">{CHILD_NICKNAME}&apos;s Vault</p>
+                <p className="text-xs text-[var(--on-surface-muted)]">Family Archive</p>
+              </div>
+              <button
+                onClick={onClose}
+                className="ml-auto p-1.5 rounded-full hover:bg-[var(--surface-container-high)] transition-colors"
+              >
+                <X className="w-4 h-4 text-[var(--on-surface-variant)]" />
+              </button>
+            </div>
+            <nav className="flex-1 overflow-y-auto py-3 px-2 space-y-0.5">
+              {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href || pathname.startsWith(href + '/')
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={onClose}
+                    className={cn(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-[var(--radius-md)] text-sm font-medium transition-colors',
+                      active
+                        ? 'bg-[var(--primary-container)] text-[var(--on-primary-container)]'
+                        : 'text-[var(--on-surface-variant)] hover:bg-[var(--surface-container)] hover:text-[var(--on-surface)]'
+                    )}
+                  >
+                    <Icon className={cn('w-5 h-5', active ? 'text-[var(--primary)]' : '')} />
+                    {label}
+                  </Link>
+                )
+              })}
+            </nav>
+          </motion.aside>
+        </>
+      )}
+    </AnimatePresence>
   )
 }

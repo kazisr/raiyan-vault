@@ -4,7 +4,7 @@ import React from 'react'
 import { usePathname } from 'next/navigation'
 import { Bell, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
-import { MobileSidebar } from './sidebar'
+import { MobileSidebarTrigger } from './sidebar'
 import { Button } from '@/components/ui/button'
 
 const PAGE_TITLES: Record<string, string> = {
@@ -18,7 +18,11 @@ const PAGE_TITLES: Record<string, string> = {
   '/settings': 'Settings',
 }
 
-export function Topbar() {
+interface TopbarProps {
+  onMobileMenuOpen: () => void
+}
+
+export function Topbar({ onMobileMenuOpen }: TopbarProps) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
 
@@ -29,7 +33,7 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-30 flex items-center gap-3 px-4 md:px-6 h-14 bg-[var(--surface)]/80 backdrop-blur-md border-b border-[var(--outline-variant)]/30">
       <div className="md:hidden">
-        <MobileSidebar />
+        <MobileSidebarTrigger onOpen={onMobileMenuOpen} />
       </div>
 
       <h1 className="text-base font-semibold text-[var(--on-surface)]">{title}</h1>
