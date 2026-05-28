@@ -1,6 +1,6 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { Heart, Camera, Star, Calendar, LogIn, Wallet } from 'lucide-react'
+import { Heart, Camera, Star, Calendar, LogIn, Wallet, ArrowUpRight } from 'lucide-react'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME, EVENT_TYPES } from '@/constants/child'
 import AgeCounter from './AgeCounter'
 import { calculateAge, formatDate } from '@/utils/age'
@@ -41,7 +41,6 @@ export default async function BabyPage() {
       .select('amount, type, currency'),
   ])
 
-  // Generate signed URLs server-side (1 hour expiry)
   const photosWithUrls = await Promise.all(
     (photos ?? []).map(async (photo) => {
       const { data } = await supabase.storage
@@ -61,196 +60,162 @@ export default async function BabyPage() {
   })
 
   return (
-<div className="min-h-screen bg-gradient-to-br from-[#EEF4FB] via-[#F9F4EE] to-[#EEF4FB]">
-  {/* Header */}
-  <header className="flex flex-col items-center justify-center text-center py-12 px-6">
-    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-[#5B7FA6] to-[#7B9EC0] mb-4 shadow-lg">
-      <Heart className="w-9 h-9 text-white" />
-    </div>
-
-    <h1 className="text-3xl sm:text-4xl font-bold text-[#1A3A5C] mt-2">
-      {CHILD_NAME}
-    </h1>
-
-    <p className="text-sm text-[#5B7FA6] mt-1 font-medium tracking-wide uppercase">
-      Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
-    </p>
-  </header>
-
-  <main className="max-w-2xl mx-auto w-full px-4 pb-16 space-y-6">
-    {/* Age card */}
-    <div className="rounded-2xl bg-gradient-to-br from-[#5B7FA6] to-[#7B9EC0] p-6 text-white shadow-md">
-      <p className="text-xs font-semibold uppercase tracking-widest opacity-75 mb-3 text-center">
-        {CHILD_NICKNAME} is
-      </p>
-
-      <AgeCounter dob={CHILD_DOB} />
-
-      <p className="text-xs opacity-60 mt-4 text-center">
-        {age.totalDays} days since birth
-      </p>
-    </div>
-
-    {/* Stats */}
-    <div className="grid grid-cols-2 gap-4">
-      <div className="rounded-2xl bg-white/80 backdrop-blur p-5 shadow-sm flex items-center justify-center gap-4 text-center">
-        <div className="w-11 h-11 rounded-xl bg-[#D6E4F5] flex items-center justify-center flex-shrink-0">
-          <Camera className="w-5 h-5 text-[#5B7FA6]" />
-        </div>
-
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-2xl font-bold text-[#1A3A5C]">
-            {photosWithUrls.length}
-          </p>
-
-          <p className="text-xs text-[#5B7FA6] font-medium">
-            Photos
-          </p>
-        </div>
-      </div>
-
-      <div className="rounded-2xl bg-white/80 backdrop-blur p-5 shadow-sm flex items-center justify-center gap-4 text-center">
-        <div className="w-11 h-11 rounded-xl bg-[#D6E4F5] flex items-center justify-center flex-shrink-0">
-          <Star className="w-5 h-5 text-[#5B7FA6]" />
-        </div>
-
-        <div className="flex flex-col items-center justify-center">
-          <p className="text-2xl font-bold text-[#1A3A5C]">
-            {events?.length ?? 0}
-          </p>
-
-          <p className="text-xs text-[#5B7FA6] font-medium">
-            Milestones
-          </p>
-        </div>
-      </div>
-    </div>
-
-    {/* Ledger balance */}
-    <div className="rounded-2xl bg-white/80 backdrop-blur p-5 shadow-sm">
-      <div className="flex items-center justify-center gap-2 mb-4">
-        <Wallet className="w-4 h-4 text-[#5B7FA6]" />
-
-        <h2 className="text-sm font-semibold text-[#1A3A5C] uppercase tracking-wide">
-          Balance
-        </h2>
-      </div>
-
-      <div className="flex items-center justify-center gap-8 flex-wrap text-center">
-        {balances.map(({ currency, balance }) => (
-          <div key={currency}>
-            <p className="text-xs text-[#5B7FA6] font-medium mb-1">
-              {currency}
+    <div className="min-h-screen bg-[#FAFAFA] text-[#1A1A1A] antialiased selection:bg-slate-100">
+      <main className="max-w-2xl mx-auto px-6 py-16 space-y-12">
+        
+        {/* Header Section */}
+        <header className="flex items-center justify-between border-b border-gray-100 pb-8">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-gray-900">
+              {CHILD_NAME}
+            </h1>
+            <p className="text-sm text-gray-500 mt-1">
+              Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
             </p>
-
-            <p
-              className={`text-2xl font-bold ${
-                balance >= 0
-                  ? 'text-[#3a7d44]'
-                  : 'text-[#c0392b]'
-              }`}
-            >
-              {formatCurrency(Math.abs(balance), currency)}
-            </p>
-
-            {balance < 0 && (
-              <p className="text-xs text-[#c0392b] mt-0.5">
-                deficit
-              </p>
-            )}
           </div>
-        ))}
-      </div>
-    </div>
+          <div className="w-10 h-10 rounded-full bg-rose-50 flex items-center justify-center text-rose-500">
+            <Heart className="w-5 h-5 fill-current" />
+          </div>
+        </header>
 
-    {/* Photo grid */}
-    {photosWithUrls.length > 0 && (
-      <div className="rounded-2xl bg-white/80 backdrop-blur shadow-sm overflow-hidden">
-        <div className="flex items-center justify-center gap-2 px-5 pt-5 pb-3">
-          <Camera className="w-4 h-4 text-[#5B7FA6]" />
+        {/* Age Counter Hero */}
+        <section className="bg-gray-50 rounded-2xl p-6 border border-gray-100">
+          <span className="text-xs font-medium uppercase tracking-wider text-gray-400 block mb-2">
+            Current Age
+          </span>
+          <div className="text-gray-900 font-medium">
+            <AgeCounter dob={CHILD_DOB} />
+          </div>
+          <div className="mt-4 pt-4 border-t border-gray-200/60 flex justify-between items-center text-xs text-gray-500">
+            <span>Days since birth</span>
+            <span className="font-semibold text-gray-700">{age.totalDays} days</span>
+          </div>
+        </section>
 
-          <h2 className="text-sm font-semibold text-[#1A3A5C] uppercase tracking-wide">
-            Photos
-          </h2>
-        </div>
+        {/* Quick Stats Grid */}
+        <section className="grid grid-cols-2 gap-4">
+          <div className="border border-gray-100 rounded-xl p-4 flex items-center gap-4 bg-white">
+            <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500">
+              <Camera className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 font-medium">Photos</p>
+              <p className="text-lg font-semibold text-gray-900">{photosWithUrls.length}</p>
+            </div>
+          </div>
 
-        <div className="columns-2 sm:columns-3 gap-1 p-1">
-          {photosWithUrls.map((photo) =>
-            photo.url ? (
-              <div
-                key={photo.id}
-                className="break-inside-avoid mb-1 overflow-hidden rounded-lg"
-              >
-                <img
-                  src={photo.url}
-                  alt={photo.caption ?? 'Photo'}
-                  className="w-full object-cover object-center"
-                  loading="lazy"
-                />
+          <div className="border border-gray-100 rounded-xl p-4 flex items-center gap-4 bg-white">
+            <div className="w-10 h-10 rounded-lg bg-gray-50 flex items-center justify-center text-gray-500">
+              <Star className="w-4 h-4" />
+            </div>
+            <div>
+              <p className="text-sm text-gray-400 font-medium">Milestones</p>
+              <p className="text-lg font-semibold text-gray-900">{events?.length ?? 0}</p>
+            </div>
+          </div>
+        </section>
+
+        {/* Financial Summary */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+            <Wallet className="w-3.5 h-3.5" />
+            <h2>Trust Vault / Balances</h2>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-4 border border-gray-100 rounded-xl p-5 bg-white">
+            {balances.map(({ currency, balance }) => (
+              <div key={currency} className="first:border-r border-gray-100 first:pr-4 last:pl-4">
+                <p className="text-xs text-gray-400 font-medium mb-1">{currency}</p>
+                <p className={`text-xl font-semibold tracking-tight ${balance >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                  {formatCurrency(Math.abs(balance), currency)}
+                </p>
+                {balance < 0 && (
+                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium bg-rose-50 text-rose-600 rounded mt-1">
+                    Deficit
+                  </span>
+                )}
               </div>
-            ) : null
-          )}
-        </div>
-      </div>
-    )}
+            ))}
+          </div>
+        </section>
 
-    {/* Recent events */}
-    {events && events.length > 0 && (
-      <div className="rounded-2xl bg-white/80 backdrop-blur shadow-sm overflow-hidden">
-        <div className="flex items-center justify-center gap-2 px-5 pt-5 pb-3">
-          <Calendar className="w-4 h-4 text-[#5B7FA6]" />
+        {/* Photo Gallery Grid */}
+        {photosWithUrls.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <Camera className="w-3.5 h-3.5" />
+              <h2>Recent Captures</h2>
+            </div>
+            
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+              {photosWithUrls.map((photo) =>
+                photo.url ? (
+                  <div
+                    key={photo.id}
+                    className="group relative aspect-square overflow-hidden rounded-xl bg-gray-100 border border-gray-100"
+                  >
+                    <img
+                      src={photo.url}
+                      alt={photo.caption ?? 'Photo'}
+                      className="w-full h-full object-cover transform transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                ) : null
+              )}
+            </div>
+          </section>
+        )}
 
-          <h2 className="text-sm font-semibold text-[#1A3A5C] uppercase tracking-wide">
-            Recent Memories
-          </h2>
-        </div>
+        {/* Timeline / Recent Memories */}
+        {events && events.length > 0 && (
+          <section className="space-y-4">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <Calendar className="w-3.5 h-3.5" />
+              <h2>Timeline Highlights</h2>
+            </div>
 
-        <ul className="divide-y divide-[#EDE7E0]">
-          {events.map((event) => {
-            const typeInfo = EVENT_TYPES.find(
-              (t) => t.value === event.event_type
-            )
+            <div className="bg-white border border-gray-100 rounded-xl divide-y divide-gray-50 overflow-hidden">
+              {events.map((event) => {
+                const typeInfo = EVENT_TYPES.find((t) => t.value === event.event_type)
+                return (
+                  <div
+                    key={event.id}
+                    className="flex items-center justify-between p-4 hover:bg-gray-50/50 transition-colors group"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <span className="w-8 h-8 rounded-lg bg-gray-50 flex items-center justify-center text-sm border border-gray-100/80">
+                        {typeInfo?.emoji ?? '📝'}
+                      </span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800 truncate">
+                          {event.title}
+                        </p>
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {formatDate(event.event_date)}
+                        </p>
+                      </div>
+                    </div>
+                    <ArrowUpRight className="w-3.5 h-3.5 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  </div>
+                )
+              })}
+            </div>
+          </section>
+        )}
 
-            return (
-              <li
-                key={event.id}
-                className="flex items-center gap-3 px-5 py-3.5"
-              >
-                <span className="text-xl flex-shrink-0">
-                  {typeInfo?.emoji ?? '📝'}
-                </span>
-
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-[#1A3A5C] truncate">
-                    {event.title}
-                  </p>
-
-                  <p className="text-xs text-[#5B7FA6] mt-0.5">
-                    {formatDate(event.event_date)}
-                  </p>
-                </div>
-              </li>
-            )
-          })}
-        </ul>
-      </div>
-    )}
-
-    {/* Footer */}
-    <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2 text-center sm:text-left">
-      <p className="text-xs text-[#5B7FA6]/60">
-        Made with ♥ for {CHILD_NICKNAME}
-      </p>
-
-      <Link
-        href="/login"
-        className="flex items-center gap-1.5 text-xs text-[#5B7FA6]/60 hover:text-[#5B7FA6] transition-colors"
-      >
-        <LogIn className="w-3.5 h-3.5" />
-        Family login
-      </Link>
+        {/* Minimal Footer */}
+        <footer className="flex items-center justify-between pt-6 border-t border-gray-100 text-xs text-gray-400">
+          <p>For {CHILD_NICKNAME} with love</p>
+          <Link
+            href="/login"
+            className="flex items-center gap-1 hover:text-gray-600 transition-colors font-medium"
+          >
+            <LogIn className="w-3.5 h-3.5" />
+            Dashboard login
+          </Link>
+        </footer>
+      </main>
     </div>
-  </main>
-</div>
   )
 }
