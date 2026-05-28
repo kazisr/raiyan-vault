@@ -84,30 +84,11 @@ export default async function BabyPage() {
         {CHILD_NICKNAME} is
       </p>
 
-      <div className="flex items-center justify-center gap-6 flex-wrap text-center">
-        {age.years > 0 && (
-          <div className="text-center">
-            <span className="text-5xl font-bold">{age.years}</span>
-            <span className="block text-sm opacity-75 mt-1">years</span>
-          </div>
-        )}
-
-        <div className="text-center">
-          <span className="text-5xl font-bold">{age.months}</span>
-          <span className="block text-sm opacity-75 mt-1">months</span>
-        </div>
-
-        <div className="text-center">
-          <span className="text-5xl font-bold">{age.days}</span>
-          <span className="block text-sm opacity-75 mt-1">days</span>
-        </div>
-      </div>
+      <AgeCounter dob={CHILD_DOB} />
 
       <p className="text-xs opacity-60 mt-4 text-center">
         {age.totalDays} days since birth
       </p>
-
-      <AgeCounter dob={CHILD_DOB} />
     </div>
 
     {/* Stats */}
