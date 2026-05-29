@@ -9,10 +9,9 @@ import { EVENT_TYPES } from '@/constants/child'
 
 interface RecentEventsProps {
   events: Event[]
-  readOnly?: boolean
 }
 
-export function RecentEvents({ events, readOnly }: RecentEventsProps) {
+export function RecentEvents({ events }: RecentEventsProps) {
   const recent = events.slice(0, 4)
 
   return (
@@ -23,20 +22,16 @@ export function RecentEvents({ events, readOnly }: RecentEventsProps) {
             <Clock className="w-4 h-4 text-[var(--primary)]" />
             Recent Events
           </CardTitle>
-          {!readOnly && (
-            <Link href="/timeline" className="text-xs text-[var(--primary)] hover:underline">View all</Link>
-          )}
+          <Link href="/timeline" className="text-xs text-[var(--primary)] hover:underline">View all</Link>
         </div>
       </CardHeader>
       <CardContent>
         {recent.length === 0 ? (
           <div className="text-center py-6">
             <p className="text-sm text-[var(--on-surface-variant)]">No events yet</p>
-            {!readOnly && (
-              <Link href="/timeline" className="text-xs text-[var(--primary)] hover:underline mt-1 block">
-                Add first memory
-              </Link>
-            )}
+            <Link href="/timeline" className="text-xs text-[var(--primary)] hover:underline mt-1 block">
+              Add first memory
+            </Link>
           </div>
         ) : (
           <div className="space-y-3">
