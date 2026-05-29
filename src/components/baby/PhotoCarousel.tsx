@@ -203,7 +203,7 @@ export default function PhotoCarousel({ photos }: Props) {
 
       {/* Thumbnail strip */}
       {photos.length > 1 && (
-        <div className="flex gap-2 mt-3 overflow-x-auto pb-1 scrollbar-hide">
+        <div className="flex gap-2 mt-3 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {photos.map((p, i) => (
             <button
               key={p.id}
