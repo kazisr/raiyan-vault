@@ -1,10 +1,11 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { Heart, Camera, Star, Calendar, LogIn, Wallet, ArrowUpRight } from 'lucide-react'
+import { Heart, Camera, Star, Calendar, LogIn, ArrowUpRight } from 'lucide-react'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME, EVENT_TYPES } from '@/constants/child'
 import AgeCounter from '@/components/baby/AgeCounter'
 import PhotoCarousel from '@/components/baby/PhotoCarousel'
 import { BabyTopbar } from '@/components/baby/BabyTopbar'
+import { BalanceSection } from '@/components/baby/BalanceSection'
 import { calculateAge, formatDate } from '@/utils/age'
 import { formatCurrency } from '@/utils/currency'
 import type { Metadata } from 'next'
@@ -124,28 +125,7 @@ export default async function BabyPage() {
         </section>
 
         {/* Financial Summary */}
-        <section className="space-y-4">
-          <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-            <Wallet className="w-3.5 h-3.5" />
-            <h2>Trust Vault / Balances</h2>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4 border border-gray-100 dark:border-gray-800 rounded-xl p-5 bg-white dark:bg-gray-900">
-            {balances.map(({ currency, balance }) => (
-              <div key={currency} className="first:border-r border-gray-100 dark:border-gray-800 first:pr-4 last:pl-4">
-                <p className="text-xs text-gray-400 dark:text-gray-500 font-medium mb-1">{currency}</p>
-                <p className={`text-xl font-semibold tracking-tight ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {formatCurrency(Math.abs(balance), currency)}
-                </p>
-                {balance < 0 && (
-                  <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded mt-1">
-                    Deficit
-                  </span>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
+        <BalanceSection balances={balances} formatAmount={formatCurrency} />
 
         {/* Photo Carousel */}
         {carouselPhotos.length > 0 && (
