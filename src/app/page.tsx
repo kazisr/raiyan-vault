@@ -1,4 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
+#import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Heart, LogIn } from 'lucide-react'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME } from '@/constants/child'
@@ -64,11 +64,11 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
-      <main className="max-w-2xl mx-auto px-6 py-20 space-y-16">
+      <main className="max-w-2xl mx-auto ">
 
         {/* Header */}
         <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-10">
-          <div className="space-y-1.5">
+          <div className="">
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
               {CHILD_NAME}
             </h1>
