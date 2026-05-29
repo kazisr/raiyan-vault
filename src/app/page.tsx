@@ -71,108 +71,110 @@ export default async function BabyPage() {
     <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
       <BabyTopbar />
 
-      <main className="max-w-2xl mx-auto px-6 py-16 space-y-12">
+      {/* Main container with standard generous outer spacing */}
+      <main className="max-w-2xl mx-auto px-6 py-20 space-y-16">
 
-        {/* Header */}
-        <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-8">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight text-gray-900 dark:text-white">
+        {/* Header Section */}
+        <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-10">
+          <div className="space-y-1.5">
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
               {CHILD_NAME}
             </h1>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
             </p>
           </div>
-          <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-500">
-            <Heart className="w-5 h-5 fill-current" />
+          <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-500 transition-transform hover:scale-105">
+            <Heart className="w-6 h-6 fill-current" />
           </div>
         </header>
 
         {/* Age Counter Hero */}
-        <section className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/40 dark:to-pink-950/30 rounded-2xl p-6 border border-rose-100/60 dark:border-rose-900/40">
-          <span className="text-xs font-medium uppercase tracking-wider text-rose-400 dark:text-rose-400 block mb-4">
+        <section className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 rounded-2xl p-8 border border-rose-100/60 dark:border-rose-900/30 shadow-sm">
+          <span className="text-xs font-semibold uppercase tracking-wider text-rose-400 dark:text-rose-400 block mb-5">
             Current Age
           </span>
           <div className="text-gray-900 dark:text-gray-100 font-medium">
             <AgeCounter dob={CHILD_DOB} />
           </div>
-          <div className="mt-5 pt-4 border-t border-rose-100/80 dark:border-rose-900/50 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
+          <div className="mt-6 pt-5 border-t border-rose-100/80 dark:border-rose-900/40 flex justify-between items-center text-xs text-gray-500 dark:text-gray-400">
             <span>Days since birth</span>
             <span className="font-semibold text-gray-700 dark:text-gray-200">{age.totalDays} days</span>
           </div>
         </section>
 
         {/* Quick Stats Grid */}
-        <section className="grid grid-cols-2 gap-4">
-          <div className="border border-gray-100 dark:border-gray-800 rounded-xl p-4 flex items-center gap-4 bg-white dark:bg-gray-900">
-            <div className="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-              <Camera className="w-4 h-4" />
+        <section className="grid grid-cols-2 gap-6">
+          <div className="border border-gray-100 dark:border-gray-800 rounded-2xl p-5 flex items-center gap-4 bg-white dark:bg-gray-900 shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0">
+              <Camera className="w-5 h-5" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Photos</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">{carouselPhotos.length}</p>
+            <div className="space-y-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">Photos</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{carouselPhotos.length}</p>
             </div>
           </div>
 
-          <div className="border border-gray-100 dark:border-gray-800 rounded-xl p-4 flex items-center gap-4 bg-white dark:bg-gray-900">
-            <div className="w-10 h-10 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400">
-              <Star className="w-4 h-4" />
+          <div className="border border-gray-100 dark:border-gray-800 rounded-2xl p-5 flex items-center gap-4 bg-white dark:bg-gray-900 shadow-sm">
+            <div className="w-12 h-12 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-gray-500 dark:text-gray-400 shrink-0">
+              <Star className="w-5 h-5" />
             </div>
-            <div>
-              <p className="text-sm text-gray-400 dark:text-gray-500 font-medium">Milestones</p>
-              <p className="text-lg font-semibold text-gray-900 dark:text-white">{events?.length ?? 0}</p>
+            <div className="space-y-0.5">
+              <p className="text-xs text-gray-400 dark:text-gray-500 font-medium uppercase tracking-wider">Milestones</p>
+              <p className="text-xl font-bold text-gray-900 dark:text-white">{events?.length ?? 0}</p>
             </div>
           </div>
         </section>
 
-        {/* Financial Summary */}
-        <BalanceSection balances={balances} />
+        {/* Financial Summary & Ledger sections contain internal padding/margins natively */}
+        <div className="space-y-16">
+          <BalanceSection balances={balances} />
+          <LedgerHistory entries={ledgerEntries ?? []} />
+        </div>
 
-        {/* Ledger History */}
-        <LedgerHistory entries={ledgerEntries ?? []} />
-
-        {/* Photo Carousel */}
+        {/* Photo Carousel Section */}
         {carouselPhotos.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              <Camera className="w-3.5 h-3.5" />
+          <section className="space-y-5">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              <Camera className="w-4 h-4" />
               <h2>Recent Captures</h2>
             </div>
-
-            <PhotoCarousel photos={carouselPhotos} />
+            <div className="rounded-2xl overflow-hidden shadow-sm">
+              <PhotoCarousel photos={carouselPhotos} />
+            </div>
           </section>
         )}
 
-        {/* Timeline */}
+        {/* Timeline Section */}
         {events && events.length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              <Calendar className="w-3.5 h-3.5" />
+          <section className="space-y-5">
+            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 mb-2">
+              <Calendar className="w-4 h-4" />
               <h2>Timeline Highlights</h2>
             </div>
 
-            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
+            <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-2xl divide-y divide-gray-100 dark:divide-gray-800 overflow-hidden shadow-sm">
               {events.map((event) => {
                 const typeInfo = EVENT_TYPES.find((t) => t.value === event.event_type)
                 return (
                   <div
                     key={event.id}
-                    className="flex items-center justify-between p-4 hover:bg-gray-50/50 dark:hover:bg-gray-800/50 transition-colors group"
+                    className="flex items-center justify-between p-5 hover:bg-gray-50/50 dark:hover:bg-gray-800/40 transition-colors group cursor-pointer"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <span className="w-8 h-8 rounded-lg bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-sm border border-gray-100/80 dark:border-gray-700">
+                    <div className="flex items-center gap-4 min-w-0">
+                      <span className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center text-base border border-gray-100/80 dark:border-gray-700 shrink-0">
                         {typeInfo?.emoji ?? '📝'}
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 space-y-0.5">
                         <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
                           {event.title}
                         </p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+                        <p className="text-xs text-gray-400 dark:text-gray-500">
                           {formatDate(event.event_date)}
                         </p>
                       </div>
                     </div>
-                    <ArrowUpRight className="w-3.5 h-3.5 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity" />
+                    <ArrowUpRight className="w-4 h-4 text-gray-300 dark:text-gray-600 opacity-0 group-hover:opacity-100 group-hover:text-gray-500 dark:group-hover:text-gray-400 transition-all transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                   </div>
                 )
               })}
@@ -180,14 +182,14 @@ export default async function BabyPage() {
           </section>
         )}
 
-        {/* Footer */}
-        <footer className="flex items-center justify-between pt-6 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500">
+        {/* Footer Section */}
+        <footer className="flex items-center justify-between pt-8 border-t border-gray-100 dark:border-gray-800 text-xs text-gray-400 dark:text-gray-500">
           <p>For {CHILD_NICKNAME} with love</p>
           <Link
             href="/login"
-            className="flex items-center gap-1 hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-medium"
+            className="flex items-center gap-1.5 hover:text-gray-600 dark:hover:text-gray-300 transition-colors font-medium p-1 -m-1 rounded-md focus:outline-none focus:ring-2 focus:ring-rose-500/20"
           >
-            <LogIn className="w-3.5 h-3.5" />
+            <LogIn className="w-4 h-4" />
             Dashboard login
           </Link>
         </footer>
