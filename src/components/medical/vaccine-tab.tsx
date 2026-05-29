@@ -4,15 +4,19 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Plus, CheckCircle2, Clock, AlertCircle, Loader2 } from 'lucide-react'
+import { Plus, CheckCircle2, Clock, AlertCircle, Loader2, MoreVertical, Pencil, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 import { formatDate, isUpcoming, isPast } from '@/utils/age'
 import type { Vaccine } from '@/types/medical'
 import { toast } from '@/hooks/use-toast'
@@ -35,31 +39,76 @@ interface VaccineTabProps {
 
 export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
   const [open, setOpen] = useState(false)
+  const [editingVaccine, setEditingVaccine] = useState<Vaccine | null>(null)
+  const [deleteTarget, setDeleteTarget] = useState<Vaccine | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+
   const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     resolver: zodResolver(schema) as any,
-    defaultValues: { administered_date: new Date().toISOString().split('T')[0] },
   })
 
   const supabase = createClient()
 
+  function openAdd() {
+    reset({ administered_date: new Date().toISOString().split('T')[0], dose: '', next_due_date: '', notes: '' })
+    setEditingVaccine(null)
+    setOpen(true)
+  }
+
+  function openEdit(v: Vaccine) {
+    reset({
+      name: v.name,
+      dose: v.dose ?? '',
+      administered_date: v.administered_date,
+      next_due_date: v.next_due_date ?? '',
+      notes: v.notes ?? '',
+    })
+    setEditingVaccine(v)
+    setOpen(true)
+  }
+
   async function onSubmit(data: FormData) {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: v, error } = await supabase
-      .from('vaccines')
-      .insert({ ...data, user_id: userId, child_id: userId } as any)
-      .select()
-      .single()
-    if (error) { toast.error('Failed to add vaccine'); return }
-    onUpdate([v!, ...vaccines])
-    toast.success('Vaccine added!')
+    if (editingVaccine) {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: updated, error } = await supabase
+        .from('vaccines')
+        .update(data as any)
+        .eq('id', editingVaccine.id)
+        .select()
+        .single()
+      if (error) { toast.error('Failed to update vaccine'); return }
+      onUpdate(vaccines.map((v) => (v.id === updated!.id ? updated! : v)))
+      toast.success('Vaccine updated!')
+    } else {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: v, error } = await supabase
+        .from('vaccines')
+        .insert({ ...data, user_id: userId, child_id: userId } as any)
+        .select()
+        .single()
+      if (error) { toast.error('Failed to add vaccine'); return }
+      onUpdate([v!, ...vaccines])
+      toast.success('Vaccine added!')
+    }
     reset()
     setOpen(false)
+    setEditingVaccine(null)
+  }
+
+  async function onDelete() {
+    if (!deleteTarget) return
+    setIsDeleting(true)
+    const { error } = await supabase.from('vaccines').delete().eq('id', deleteTarget.id)
+    if (error) { toast.error('Failed to delete vaccine'); setIsDeleting(false); return }
+    onUpdate(vaccines.filter((v) => v.id !== deleteTarget.id))
+    toast.success('Vaccine deleted')
+    setDeleteTarget(null)
+    setIsDeleting(false)
   }
 
   const upcoming = vaccines.filter((v) => v.next_due_date && isUpcoming(v.next_due_date, 60))
   const overdue = vaccines.filter((v) => v.next_due_date && isPast(v.next_due_date))
-  const completed = vaccines.filter((v) => !v.next_due_date || (!isUpcoming(v.next_due_date, 60) && !isPast(v.next_due_date)))
 
   return (
     <div className="space-y-4 mt-4">
@@ -69,7 +118,7 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
           {overdue.length > 0 && <Badge variant="error">{overdue.length} overdue</Badge>}
           {upcoming.length > 0 && <Badge variant="default">{upcoming.length} upcoming</Badge>}
         </div>
-        <Button size="sm" onClick={() => setOpen(true)}>
+        <Button size="sm" onClick={openAdd}>
           <Plus className="w-4 h-4" /> Add vaccine
         </Button>
       </div>
@@ -85,7 +134,7 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
             const isOverdue = v.next_due_date && isPast(v.next_due_date)
             const isNext = v.next_due_date && isUpcoming(v.next_due_date, 60)
             return (
-              <Card key={v.id}>
+              <Card key={v.id} className="group">
                 <CardContent className="pt-3 pb-3">
                   <div className="flex items-center gap-3">
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 ${
@@ -109,8 +158,33 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
                         {v.next_due_date && ` · Next: ${formatDate(v.next_due_date)}`}
                       </p>
                     </div>
-                    {isOverdue && <Badge variant="error">Overdue</Badge>}
-                    {isNext && !isOverdue && <Badge variant="default">Soon</Badge>}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {isOverdue && <Badge variant="error">Overdue</Badge>}
+                      {isNext && !isOverdue && <Badge variant="default">Soon</Badge>}
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            className="sm:opacity-0 sm:group-hover:opacity-100 transition-opacity"
+                          >
+                            <MoreVertical className="w-4 h-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openEdit(v)}>
+                            <Pencil className="w-3.5 h-3.5" /> Edit
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-[var(--error)] focus:text-[var(--error)]"
+                            onClick={() => setDeleteTarget(v)}
+                          >
+                            <Trash2 className="w-3.5 h-3.5" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   {v.notes && <p className="text-xs text-[var(--on-surface-muted)] mt-1.5 pl-11">{v.notes}</p>}
                 </CardContent>
@@ -120,9 +194,12 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
         </div>
       )}
 
-      <Dialog open={open} onOpenChange={setOpen}>
+      {/* Add / Edit dialog */}
+      <Dialog open={open} onOpenChange={(v) => { if (!v) { setOpen(false); setEditingVaccine(null) } else setOpen(true) }}>
         <DialogContent className="max-w-sm">
-          <DialogHeader><DialogTitle>Add vaccine</DialogTitle></DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{editingVaccine ? 'Edit vaccine' : 'Add vaccine'}</DialogTitle>
+          </DialogHeader>
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
             <div className="space-y-1.5">
               <Label>Vaccine name *</Label>
@@ -149,11 +226,32 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
             </div>
             <div className="flex gap-2 pt-1">
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}Save
+                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+                {editingVaccine ? 'Update' : 'Save'}
               </Button>
-              <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancel</Button>
+              <Button type="button" variant="outline" onClick={() => { setOpen(false); setEditingVaccine(null) }}>
+                Cancel
+              </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={!!deleteTarget} onOpenChange={(v) => { if (!v) setDeleteTarget(null) }}>
+        <DialogContent className="max-w-xs">
+          <DialogHeader>
+            <DialogTitle>Delete vaccine?</DialogTitle>
+            <DialogDescription>
+              {deleteTarget?.name}{deleteTarget?.dose ? ` (${deleteTarget.dose})` : ''}. This cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex gap-2 pt-1">
+            <Button variant="destructive" disabled={isDeleting} onClick={onDelete}>
+              {isDeleting && <Loader2 className="w-4 h-4 animate-spin" />}Delete
+            </Button>
+            <Button variant="outline" onClick={() => setDeleteTarget(null)}>Cancel</Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
