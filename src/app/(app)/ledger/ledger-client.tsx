@@ -30,6 +30,7 @@ import { formatCurrency, CURRENCY_SYMBOLS } from '@/utils/currency'
 import { formatDate } from '@/utils/age'
 import { LEDGER_CATEGORIES } from '@/types/ledger'
 import type { LedgerEntry } from '@/types/ledger'
+import { toast } from '@/hooks/use-toast'
 import dayjs from 'dayjs'
 
 const schema = z.object({
@@ -109,20 +110,24 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
       description: data.description || null,
     }
     if (editingEntry) {
-      const { data: updated } = await supabase
+      const { data: updated, error } = await supabase
         .from('ledger_entries')
         .update(payload)
         .eq('id', editingEntry.id)
         .select()
         .single()
-      if (updated) setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
+      if (error) { toast.error('Failed to update entry'); return }
+      setEntries((prev) => prev.map((e) => (e.id === updated!.id ? updated! : e)))
+      toast.success('Entry updated!')
     } else {
-      const { data: entry } = await supabase
+      const { data: entry, error } = await supabase
         .from('ledger_entries')
         .insert({ ...payload, user_id: userId, child_id: userId })
         .select()
         .single()
-      if (entry) setEntries((prev) => [entry, ...prev])
+      if (error) { toast.error('Failed to add entry'); return }
+      setEntries((prev) => [entry!, ...prev])
+      toast.success('Entry added!')
     }
     closeDialog()
   }
@@ -130,8 +135,10 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
   async function onDelete() {
     if (!deleteTarget) return
     setIsDeleting(true)
-    await supabase.from('ledger_entries').delete().eq('id', deleteTarget.id)
+    const { error } = await supabase.from('ledger_entries').delete().eq('id', deleteTarget.id)
+    if (error) { toast.error('Failed to delete entry'); setIsDeleting(false); return }
     setEntries((prev) => prev.filter((e) => e.id !== deleteTarget.id))
+    toast.success('Entry deleted')
     setDeleteTarget(null)
     setIsDeleting(false)
   }

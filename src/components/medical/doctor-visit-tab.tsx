@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent } from '@/components/ui/card'
 import { formatDate } from '@/utils/age'
 import type { DoctorVisit } from '@/types/medical'
+import { toast } from '@/hooks/use-toast'
 
 const schema = z.object({
   doctor_name: z.string().min(1, 'Required'),
@@ -42,11 +43,13 @@ export function DoctorVisitTab({ visits, onUpdate, userId }: DoctorVisitTabProps
 
   async function onSubmit(data: FormData) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: v } = await supabase
+    const { data: v, error } = await supabase
       .from('doctor_visits')
       .insert({ ...data, cost: data.cost ? Number(data.cost) : null, user_id: userId, child_id: userId } as any)
       .select().single()
-    if (v) onUpdate([v, ...visits])
+    if (error) { toast.error('Failed to add visit'); return }
+    onUpdate([v!, ...visits])
+    toast.success('Visit recorded!')
     reset(); setOpen(false)
   }
 

@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Album, Photo } from '@/types/gallery'
+import { toast } from '@/hooks/use-toast'
 
 const BUCKET = 'photos'
 
@@ -60,12 +61,14 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   async function createAlbum() {
     if (!albumName.trim()) return
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('albums')
       .insert({ name: albumName, user_id: userId, child_id: userId } as any)
       .select()
       .single()
-    if (data) setAlbums((prev) => [data, ...prev])
+    if (error) { toast.error('Failed to create album'); return }
+    setAlbums((prev) => [data!, ...prev])
+    toast.success('Album created!')
     setAlbumName('')
     setNewAlbumOpen(false)
   }
@@ -73,6 +76,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   async function uploadPhotos() {
     if (!uploadFiles.length) return
     setUploading(true)
+    let uploaded = 0
     try {
       for (const file of uploadFiles) {
         const path = `${userId}/${Date.now()}-${file.name}`
@@ -93,7 +97,14 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
           } as any)
           .select()
           .single()
-        if (photo) setPhotos((prev) => [photo, ...prev])
+        if (photo) { setPhotos((prev) => [photo, ...prev]); uploaded++ }
+      }
+      if (uploaded === uploadFiles.length) {
+        toast.success(`${uploaded} photo${uploaded > 1 ? 's' : ''} uploaded!`)
+      } else if (uploaded > 0) {
+        toast.warning(`${uploaded} of ${uploadFiles.length} photos uploaded`)
+      } else {
+        toast.error('Upload failed')
       }
     } finally {
       setUploading(false)
@@ -103,10 +114,12 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   }
 
   async function deletePhoto(photo: Photo) {
-    await supabase.storage.from(BUCKET).remove([photo.storage_path])
-    await supabase.from('photos').delete().eq('id', photo.id)
+    const { error: storageError } = await supabase.storage.from(BUCKET).remove([photo.storage_path])
+    const { error: dbError } = await supabase.from('photos').delete().eq('id', photo.id)
+    if (storageError || dbError) { toast.error('Failed to delete photo'); return }
     setPhotos((prev) => prev.filter((p) => p.id !== photo.id))
     if (lightboxPhoto?.id === photo.id) setLightboxPhoto(null)
+    toast.success('Photo deleted')
   }
 
   const displayPhotos = selectedAlbum

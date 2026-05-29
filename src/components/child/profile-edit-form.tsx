@@ -4,7 +4,7 @@ import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Loader2, Pencil, Check } from 'lucide-react'
+import { Loader2, Pencil } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +14,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { BLOOD_GROUPS } from '@/constants/child'
 import type { Child } from '@/types/child'
+import { toast } from '@/hooks/use-toast'
 
 const schema = z.object({
   name: z.string().min(2, 'Name too short'),
@@ -33,7 +34,6 @@ interface ProfileEditFormProps {
 
 export function ProfileEditForm({ profile, userId }: ProfileEditFormProps) {
   const [editing, setEditing] = useState(!profile)
-  const [saved, setSaved] = useState(false)
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const { register, handleSubmit, setValue, formState: { errors, isSubmitting } } = useForm<FormData>({
@@ -60,15 +60,15 @@ export function ProfileEditForm({ profile, userId }: ProfileEditFormProps) {
       user_id: userId,
     }
 
+    let error
     if (profile) {
-      await (supabase.from('child_profiles') as any).update(payload).eq('id', profile.id)
+      ({ error } = await (supabase.from('child_profiles') as any).update(payload).eq('id', profile.id))
     } else {
-      await (supabase.from('child_profiles') as any).insert(payload)
+      ({ error } = await (supabase.from('child_profiles') as any).insert(payload))
     }
-
-    setSaved(true)
+    if (error) { toast.error('Failed to save profile'); return }
+    toast.success('Profile saved!')
     setEditing(false)
-    setTimeout(() => setSaved(false), 2000)
   }
 
   return (
@@ -80,11 +80,6 @@ export function ProfileEditForm({ profile, userId }: ProfileEditFormProps) {
             <Button variant="ghost" size="icon-sm" onClick={() => setEditing(true)}>
               <Pencil className="w-4 h-4" />
             </Button>
-          )}
-          {saved && (
-            <div className="flex items-center gap-1 text-sm text-[var(--secondary)]">
-              <Check className="w-4 h-4" /> Saved
-            </div>
           )}
         </div>
       </CardHeader>

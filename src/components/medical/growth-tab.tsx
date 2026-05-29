@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { formatDate } from '@/utils/age'
 import type { GrowthLog } from '@/types/medical'
+import { toast } from '@/hooks/use-toast'
 
 const schema = z.object({
   log_date: z.string().min(1),
@@ -44,7 +45,7 @@ export function GrowthTab({ logs, onUpdate, userId }: GrowthTabProps) {
 
   async function onSubmit(data: FormData) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: log } = await supabase
+    const { data: log, error } = await supabase
       .from('growth_logs')
       .insert({
         log_date: data.log_date,
@@ -56,7 +57,9 @@ export function GrowthTab({ logs, onUpdate, userId }: GrowthTabProps) {
         child_id: userId,
       } as any)
       .select().single()
-    if (log) onUpdate([...logs, log].sort((a, b) => new Date(a.log_date).getTime() - new Date(b.log_date).getTime()))
+    if (error) { toast.error('Failed to save measurement'); return }
+    onUpdate([...logs, log!].sort((a, b) => new Date(a.log_date).getTime() - new Date(b.log_date).getTime()))
+    toast.success('Growth logged!')
     reset(); setOpen(false)
   }
 
