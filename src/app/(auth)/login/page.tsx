@@ -23,7 +23,7 @@ type LoginForm = z.infer<typeof loginSchema>
 export default function LoginPage() {
   const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
-  const [serverError, setServerError] = useState('')
+  const [navigating, setNavigating] = useState(false)
 
   const {
     register,
@@ -34,25 +34,36 @@ export default function LoginPage() {
     resolver: zodResolver(loginSchema) as any,
   })
 
+  const loading = isSubmitting || navigating
+
   async function onSubmit(data: LoginForm) {
-    setServerError('')
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
       email: data.email,
       password: data.password,
     })
     if (error) {
-      setServerError(error.message)
       toast.error(error.message)
       return
     }
     toast.success('Welcome back!')
+    setNavigating(true)
     router.push('/dashboard')
     router.refresh()
   }
 
   return (
-    <div className="space-y-6">
+    <div className="relative space-y-6">
+
+      {/* Loading overlay */}
+      {loading && (
+        <div className="absolute inset-0 -m-6 sm:-m-8 bg-[var(--surface-container-low)]/80 backdrop-blur-[2px] rounded-[var(--radius-2xl)] flex flex-col items-center justify-center gap-3 z-10">
+          <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
+          <p className="text-sm font-medium text-[var(--on-surface-variant)]">
+            {navigating ? 'Opening vault…' : 'Signing in…'}
+          </p>
+        </div>
+      )}
 
       {/* Heading */}
       <div className="space-y-1">
@@ -124,16 +135,8 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Server error */}
-        {serverError && (
-          <div className="flex items-start gap-2.5 rounded-[var(--radius-lg)] bg-[var(--error-container)] border border-[var(--error)]/20 px-4 py-3">
-            <AlertCircle className="w-4 h-4 text-[var(--error)] flex-shrink-0 mt-0.5" />
-            <p className="text-sm text-[var(--on-error-container)]">{serverError}</p>
-          </div>
-        )}
-
         {/* Submit */}
-        <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
+        <Button type="submit" className="w-full" size="lg" disabled={loading}>
           {isSubmitting ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
