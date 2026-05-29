@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, FolderOpen, Images, X, ChevronLeft, Loader2, ImageIcon } from 'lucide-react'
+import { Upload, FolderOpen, Images, X, ChevronLeft, Loader2, ImageIcon, Trash2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -102,6 +102,13 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
     }
   }
 
+  async function deletePhoto(photo: Photo) {
+    await supabase.storage.from(BUCKET).remove([photo.storage_path])
+    await supabase.from('photos').delete().eq('id', photo.id)
+    setPhotos((prev) => prev.filter((p) => p.id !== photo.id))
+    if (lightboxPhoto?.id === photo.id) setLightboxPhoto(null)
+  }
+
   const displayPhotos = selectedAlbum
     ? photos.filter((p) => p.album_id === selectedAlbum.id)
     : photos
@@ -143,7 +150,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
           </TabsList>
 
           <TabsContent value="photos">
-            <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} />
+            <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={deletePhoto} />
           </TabsContent>
 
           <TabsContent value="albums">
@@ -182,7 +189,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
       )}
 
       {selectedAlbum && (
-        <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} />
+        <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={deletePhoto} />
       )}
 
       {/* New Album Dialog */}
@@ -251,14 +258,14 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
       {/* Lightbox */}
       <AnimatePresence>
         {lightboxPhoto && (
-          <LightboxOverlay photo={lightboxPhoto} onClose={() => setLightboxPhoto(null)} />
+          <LightboxOverlay photo={lightboxPhoto} onClose={() => setLightboxPhoto(null)} onDelete={deletePhoto} />
         )}
       </AnimatePresence>
     </div>
   )
 }
 
-function LightboxOverlay({ photo, onClose }: { photo: Photo; onClose: () => void }) {
+function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: () => void; onDelete: (photo: Photo) => void }) {
   const url = useSignedUrl(photo.storage_path)
   return (
     <motion.div
@@ -273,6 +280,16 @@ function LightboxOverlay({ photo, onClose }: { photo: Photo; onClose: () => void
         onClick={onClose}
       >
         <X className="w-6 h-6" />
+      </button>
+      <button
+        className="absolute top-4 left-4 text-white/60 hover:text-red-400 p-2 transition-colors"
+        onClick={(e) => {
+          e.stopPropagation()
+          if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
+        }}
+        title="Delete photo"
+      >
+        <Trash2 className="w-5 h-5" />
       </button>
       {url ? (
         <motion.img
@@ -290,7 +307,7 @@ function LightboxOverlay({ photo, onClose }: { photo: Photo; onClose: () => void
   )
 }
 
-function PhotoCard({ photo, index, onClick }: { photo: Photo; index: number; onClick: () => void }) {
+function PhotoCard({ photo, index, onClick, onDelete }: { photo: Photo; index: number; onClick: () => void; onDelete: (p: Photo) => void }) {
   const url = useSignedUrl(photo.storage_path)
   return (
     <motion.div
@@ -298,26 +315,37 @@ function PhotoCard({ photo, index, onClick }: { photo: Photo; index: number; onC
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
       transition={{ delay: index * 0.05 }}
-      className="break-inside-avoid cursor-pointer rounded-[var(--radius-md)] overflow-hidden hover:opacity-90 transition-opacity bg-[var(--surface-container-high)]"
-      onClick={onClick}
+      className="break-inside-avoid relative rounded-[var(--radius-md)] overflow-hidden bg-[var(--surface-container-high)] group"
     >
-      {url ? (
-        <img
-          src={url}
-          alt={photo.caption ?? `Photo ${index + 1}`}
-          className="w-full object-cover"
-          loading="lazy"
-        />
-      ) : (
-        <div className="w-full aspect-square flex items-center justify-center">
-          <ImageIcon className="w-6 h-6 text-[var(--on-surface-muted)]" />
-        </div>
-      )}
+      <div className="cursor-pointer hover:opacity-90 transition-opacity" onClick={onClick}>
+        {url ? (
+          <img
+            src={url}
+            alt={photo.caption ?? `Photo ${index + 1}`}
+            className="w-full object-cover"
+            loading="lazy"
+          />
+        ) : (
+          <div className="w-full aspect-square flex items-center justify-center">
+            <ImageIcon className="w-6 h-6 text-[var(--on-surface-muted)]" />
+          </div>
+        )}
+      </div>
+      <button
+        className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/40 hover:bg-red-500 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all z-10"
+        onClick={(e) => {
+          e.stopPropagation()
+          if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
+        }}
+        title="Delete photo"
+      >
+        <Trash2 className="w-3.5 h-3.5" />
+      </button>
     </motion.div>
   )
 }
 
-function PhotoGrid({ photos, onPhotoClick }: { photos: Photo[]; onPhotoClick: (p: Photo) => void }) {
+function PhotoGrid({ photos, onPhotoClick, onDelete }: { photos: Photo[]; onPhotoClick: (p: Photo) => void; onDelete: (p: Photo) => void }) {
   if (photos.length === 0) {
     return (
       <div className="text-center py-16">
@@ -330,7 +358,7 @@ function PhotoGrid({ photos, onPhotoClick }: { photos: Photo[]; onPhotoClick: (p
   return (
     <div className="columns-2 md:columns-3 gap-3 space-y-3 mt-4">
       {photos.map((photo, i) => (
-        <PhotoCard key={photo.id} photo={photo} index={i} onClick={() => onPhotoClick(photo)} />
+        <PhotoCard key={photo.id} photo={photo} index={i} onClick={() => onPhotoClick(photo)} onDelete={onDelete} />
       ))}
     </div>
   )
