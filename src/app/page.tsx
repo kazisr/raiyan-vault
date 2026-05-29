@@ -127,7 +127,7 @@ export default async function BabyPage() {
         </section>
 
         {/* Financial Summary & Ledger sections contain internal padding/margins natively */}
-        <div style={{ padding: '20px' }} className="space-y-16 p-10">
+        <div className="space-y-16 p-10">
           <BalanceSection balances={balances} />
           <LedgerHistory entries={ledgerEntries ?? []} />
         </div>
