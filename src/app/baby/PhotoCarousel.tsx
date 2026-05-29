@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import React, { useState, useCallback, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, Download, X, ZoomIn } from 'lucide-react'
 
 interface Photo {
@@ -18,6 +18,7 @@ export default function PhotoCarousel({ photos }: Props) {
   const [lightbox, setLightbox] = useState<number | null>(null)
   const [isAnimating, setIsAnimating] = useState(false)
   const [direction, setDirection] = useState<'left' | 'right'>('right')
+  const [aspectRatios, setAspectRatios] = useState<Record<string, number>>({})
 
   const go = useCallback(
     (next: number, dir: 'left' | 'right') => {
@@ -67,6 +68,13 @@ export default function PhotoCarousel({ photos }: Props) {
     return () => window.removeEventListener('keydown', handler)
   }, [lightbox, lightboxPrev, lightboxNext])
 
+  function handleImageLoad(e: React.SyntheticEvent<HTMLImageElement>, photoId: string) {
+    const { naturalWidth, naturalHeight } = e.currentTarget
+    if (naturalWidth && naturalHeight) {
+      setAspectRatios((prev) => ({ ...prev, [photoId]: naturalWidth / naturalHeight }))
+    }
+  }
+
   const download = (photo: Photo) => {
     const a = document.createElement('a')
     a.href = photo.url
@@ -78,14 +86,33 @@ export default function PhotoCarousel({ photos }: Props) {
   if (photos.length === 0) return null
 
   const photo = photos[current]
+  const currentRatio = aspectRatios[photo.id] ?? 4 / 3
+  const isPortrait = currentRatio < 1
+  const containerStyle: React.CSSProperties = {
+    aspectRatio: currentRatio,
+    maxWidth: isPortrait ? `calc(75vh * ${currentRatio})` : '100%',
+  }
 
   return (
     <>
       {/* Carousel */}
-      <div className="relative rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800 aspect-[4/3] select-none group">
+      <div className="w-full flex justify-center">
+      <div
+        className="relative rounded-2xl overflow-hidden bg-gray-900 dark:bg-gray-950 select-none group w-full transition-all duration-300"
+        style={containerStyle}
+      >
+        {/* Blurred background fill (visible for portrait images with letterboxing) */}
+        <div className="absolute inset-0 overflow-hidden">
+          <img
+            src={photo.url}
+            aria-hidden
+            className="w-full h-full object-cover blur-2xl scale-110 opacity-50"
+          />
+        </div>
+
         {/* Slide image */}
         <div
-          className="w-full h-full"
+          className="relative w-full h-full flex items-center justify-center"
           style={{
             transition: isAnimating ? 'opacity 250ms ease, transform 250ms ease' : undefined,
             opacity: isAnimating ? 0 : 1,
@@ -97,7 +124,8 @@ export default function PhotoCarousel({ photos }: Props) {
           <img
             src={photo.url}
             alt={photo.caption ?? 'Photo'}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain"
+            onLoad={(e) => handleImageLoad(e, photo.id)}
           />
         </div>
 
@@ -153,6 +181,7 @@ export default function PhotoCarousel({ photos }: Props) {
           className="absolute inset-0 z-0 cursor-zoom-in"
           aria-label="View full size"
         />
+      </div>
       </div>
 
       {/* Dots indicator */}
