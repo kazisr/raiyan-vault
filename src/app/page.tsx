@@ -1,13 +1,13 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
-import { Heart, Camera, Star, Calendar, LogIn, ArrowUpRight, TrendingUp, TrendingDown } from 'lucide-react'
+import { Heart, Camera, Star, Calendar, LogIn, ArrowUpRight } from 'lucide-react'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME, EVENT_TYPES } from '@/constants/child'
 import AgeCounter from '@/components/baby/AgeCounter'
 import PhotoCarousel from '@/components/baby/PhotoCarousel'
 import { BabyTopbar } from '@/components/baby/BabyTopbar'
 import { BalanceSection } from '@/components/baby/BalanceSection'
+import { LedgerHistory } from '@/components/baby/LedgerHistory'
 import { calculateAge, formatDate } from '@/utils/age'
-import { formatCurrency } from '@/utils/currency'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -129,54 +129,7 @@ export default async function BabyPage() {
         <BalanceSection balances={balances} />
 
         {/* Ledger History */}
-        {(ledgerEntries ?? []).length > 0 && (
-          <section className="space-y-4">
-            <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500">
-              <TrendingUp className="w-3.5 h-3.5" />
-              <h2>Ledger History</h2>
-            </div>
-            {(['BDT', 'JPY'] as const).map((currency) => {
-              const entries = (ledgerEntries ?? []).filter((e) => e.currency === currency)
-              if (entries.length === 0) return null
-              return (
-                <div key={currency}>
-                  <p className="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wider">{currency}</p>
-                  <div className="bg-white dark:bg-gray-900 border border-gray-100 dark:border-gray-800 rounded-xl divide-y divide-gray-50 dark:divide-gray-800 overflow-hidden">
-                    {entries.map((entry) => (
-                      <div key={entry.id} className="flex items-center justify-between p-4">
-                        <div className="flex items-center gap-3 min-w-0">
-                          <span className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${
-                            entry.type === 'income'
-                              ? 'bg-emerald-50 dark:bg-emerald-900/30 text-emerald-500 dark:text-emerald-400'
-                              : 'bg-rose-50 dark:bg-rose-900/30 text-rose-500 dark:text-rose-400'
-                          }`}>
-                            {entry.type === 'income'
-                              ? <TrendingUp className="w-4 h-4" />
-                              : <TrendingDown className="w-4 h-4" />}
-                          </span>
-                          <div className="min-w-0">
-                            <p className="text-sm font-medium text-gray-800 dark:text-gray-200 truncate">
-                              {entry.description ?? entry.category}
-                            </p>
-                            <div className="flex items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                              <span>{formatDate(entry.entry_date)}</span>
-                              {entry.source_person && <><span>·</span><span>{entry.source_person}</span></>}
-                            </div>
-                          </div>
-                        </div>
-                        <p className={`text-sm font-bold tabular-nums flex-shrink-0 ${
-                          entry.type === 'income' ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
-                        }`}>
-                          {entry.type === 'income' ? '+' : '-'}{formatCurrency(entry.amount, entry.currency)}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )
-            })}
-          </section>
-        )}
+        <LedgerHistory entries={ledgerEntries ?? []} />
 
         {/* Photo Carousel */}
         {carouselPhotos.length > 0 && (
