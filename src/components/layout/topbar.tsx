@@ -1,11 +1,12 @@
 'use client'
 
-import React from 'react'
+import React, { useEffect, useState } from 'react'
 import { usePathname } from 'next/navigation'
 import { Bell, Moon, Sun } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { MobileSidebarTrigger } from './sidebar'
 import { Button } from '@/components/ui/button'
+import { createClient } from '@/lib/supabase/client'
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
@@ -25,6 +26,14 @@ interface TopbarProps {
 export function Topbar({ onMobileMenuOpen }: TopbarProps) {
   const pathname = usePathname()
   const { theme, setTheme } = useTheme()
+  const [userMeta, setUserMeta] = useState<{ name?: string; role?: string } | null>(null)
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user?.user_metadata) setUserMeta(user.user_metadata)
+    })
+  }, [])
 
   const title =
     Object.entries(PAGE_TITLES).find(([path]) => pathname.startsWith(path))?.[1] ??
@@ -70,6 +79,23 @@ export function Topbar({ onMobileMenuOpen }: TopbarProps) {
         <Button variant="ghost" size="icon-sm" aria-label="Notifications" className="relative">
           <Bell className="h-[18px] w-[18px]" />
         </Button>
+
+        {/* User chip */}
+        {userMeta?.name && (
+          <div className="hidden sm:flex items-center gap-1.5 ml-1 pl-2 border-l border-[var(--outline-variant)]">
+            <div className="w-7 h-7 rounded-full bg-[var(--primary-container)] flex items-center justify-center flex-shrink-0">
+              <span className="text-xs font-semibold text-[var(--primary)]">
+                {userMeta.name.charAt(0).toUpperCase()}
+              </span>
+            </div>
+            <div className="leading-none">
+              <p className="text-xs font-medium text-[var(--on-surface)]">{userMeta.name}</p>
+              {userMeta.role && (
+                <p className="text-[10px] text-[var(--on-surface-muted)]">{userMeta.role}</p>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </header>
   )

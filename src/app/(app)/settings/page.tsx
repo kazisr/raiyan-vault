@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
+import { UserProfileCard } from '@/components/user/user-profile-card'
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
@@ -39,6 +40,9 @@ export default function SettingsPage() {
         <h2 className="text-lg font-semibold text-[var(--on-surface)]">Settings</h2>
         <p className="text-sm text-[var(--on-surface-muted)]">Manage your preferences and account</p>
       </div>
+
+      {/* User profile */}
+      <UserProfileCard />
 
       {/* Appearance */}
       <Card>
