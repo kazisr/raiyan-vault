@@ -18,6 +18,7 @@ import { Switch } from '@/components/ui/switch'
 import { Separator } from '@/components/ui/separator'
 import { formatDate, formatRelative } from '@/utils/age'
 import type { BlogPost } from '@/types/blog'
+import { toast } from '@/hooks/use-toast'
 
 const schema = z.object({
   title: z.string().min(1, 'Title required'),
@@ -59,22 +60,28 @@ export function BlogClient({ posts: initPosts, userId }: BlogClientProps) {
     }
 
     if (editingPost) {
-      await (supabase.from('blog_posts') as any).update(payload).eq('id', editingPost.id)
+      const { error: updateError } = await (supabase.from('blog_posts') as any).update(payload).eq('id', editingPost.id)
+      if (updateError) { toast.error('Failed to update post'); return }
       const { data: updated } = await supabase
         .from('blog_posts').select('*').eq('id', editingPost.id).single() as { data: BlogPost | null }
       if (updated) setPosts((prev) => prev.map((p) => p.id === editingPost.id ? updated : p))
+      toast.success(data.status === 'published' ? 'Post published!' : 'Draft saved')
     } else {
-      const { data: created } = await (supabase.from('blog_posts') as any)
-        .insert(payload).select().single() as { data: BlogPost | null }
+      const { data: created, error: insertError } = await (supabase.from('blog_posts') as any)
+        .insert(payload).select().single() as { data: BlogPost | null; error: unknown }
+      if (insertError) { toast.error('Failed to create post'); return }
       if (created) setPosts((prev) => [created, ...prev])
+      toast.success(data.status === 'published' ? 'Post published!' : 'Draft saved')
     }
 
     reset(); setEditorOpen(false); setEditingPost(undefined)
   }
 
   async function deletePost(id: string) {
-    await supabase.from('blog_posts').delete().eq('id', id)
+    const { error } = await supabase.from('blog_posts').delete().eq('id', id)
+    if (error) { toast.error('Failed to delete post'); return }
     setPosts((prev) => prev.filter((p) => p.id !== id))
+    toast.success('Post deleted')
   }
 
   function openEdit(post: BlogPost) {

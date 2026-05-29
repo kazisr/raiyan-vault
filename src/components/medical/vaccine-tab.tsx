@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { formatDate, isUpcoming, isPast } from '@/utils/age'
 import type { Vaccine } from '@/types/medical'
+import { toast } from '@/hooks/use-toast'
 
 const schema = z.object({
   name: z.string().min(1, 'Required'),
@@ -44,12 +45,14 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
 
   async function onSubmit(data: FormData) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: v } = await supabase
+    const { data: v, error } = await supabase
       .from('vaccines')
       .insert({ ...data, user_id: userId, child_id: userId } as any)
       .select()
       .single()
-    if (v) onUpdate([v, ...vaccines])
+    if (error) { toast.error('Failed to add vaccine'); return }
+    onUpdate([v!, ...vaccines])
+    toast.success('Vaccine added!')
     reset()
     setOpen(false)
   }

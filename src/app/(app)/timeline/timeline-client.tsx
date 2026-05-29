@@ -12,6 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge'
 import { EVENT_TYPES } from '@/constants/child'
 import type { EventWithImages } from '@/types/events'
+import { toast } from '@/hooks/use-toast'
 import dayjs from 'dayjs'
 
 interface TimelineClientProps {
@@ -28,33 +29,37 @@ export function TimelineClient({ events: initial, userId }: TimelineClientProps)
   const supabase = createClient()
 
   async function handleCreate(data: EventFormSubmit) {
-    const { data: created } = await (supabase
+    const { data: created, error } = await (supabase
       .from('events') as any)
       .insert({ ...data, user_id: userId, child_id: userId })
       .select('*, event_images(*)')
-      .single() as { data: EventWithImages | null }
-    if (created) setEvents((prev) => [created, ...prev])
+      .single() as { data: EventWithImages | null; error: unknown }
+    if (error) { toast.error('Failed to add event'); return }
+    setEvents((prev) => [created!, ...prev])
+    toast.success('Memory added!')
     setDialogOpen(false)
   }
 
   async function handleUpdate(data: EventFormSubmit) {
     if (!editingEvent) return
-    await (supabase.from('events') as any).update(data).eq('id', editingEvent.id)
+    const { error: updateError } = await (supabase.from('events') as any).update(data).eq('id', editingEvent.id)
+    if (updateError) { toast.error('Failed to update event'); return }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: updated } = await (supabase.from('events') as any)
       .select('*, event_images(*)')
       .eq('id', editingEvent.id)
       .single() as { data: EventWithImages | null }
-    if (updated) {
-      setEvents((prev) => prev.map((e) => e.id === editingEvent.id ? updated : e))
-    }
+    if (updated) setEvents((prev) => prev.map((e) => e.id === editingEvent.id ? updated : e))
+    toast.success('Event updated!')
     setEditingEvent(undefined)
     setDialogOpen(false)
   }
 
   async function handleDelete(id: string) {
-    await supabase.from('events').delete().eq('id', id)
+    const { error } = await supabase.from('events').delete().eq('id', id)
+    if (error) { toast.error('Failed to delete event'); return }
     setEvents((prev) => prev.filter((e) => e.id !== id))
+    toast.success('Event deleted')
   }
 
   async function handleSave(data: EventFormSubmit) {
