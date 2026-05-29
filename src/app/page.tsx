@@ -1,4 +1,4 @@
-#import { createClient } from '@supabase/supabase-js'
+import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Heart, LogIn } from 'lucide-react'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME } from '@/constants/child'
@@ -64,10 +64,10 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
-      <main className="max-w-2xl mx-auto ">
+      <main className="max-w-2xl mx-auto px-4 py-8 space-y-8">
 
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-10">
+        <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-6">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
               {CHILD_NAME}
@@ -85,7 +85,7 @@ export default async function HomePage() {
         </header>
 
         {/* Age Counter */}
-        <section className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 rounded-2xl p-8 border border-rose-100/60 dark:border-rose-900/30 shadow-sm">
+        <section className="bg-gradient-to-br from-rose-50 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20 rounded-2xl p-6 border border-rose-100/60 dark:border-rose-900/30 shadow-sm">
           <span className="text-xs font-semibold uppercase tracking-wider text-rose-400 block mb-5">
             Current Age
           </span>
