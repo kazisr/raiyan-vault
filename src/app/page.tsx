@@ -63,11 +63,11 @@ export default async function HomePage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
-      <main className="max-w-2xl mx-auto px-6 py-20 space-y-16">
+    <div className="-m-4 sm:-m-6 min-h-screen bg-[#FAFAFA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
+      <main className="max-w-2xl mx-auto px-6 py-10 space-y-10">
 
         {/* Header */}
-        <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-10">
+        <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-6">
           <div className="space-y-1.5">
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
               {CHILD_NAME}
@@ -108,7 +108,7 @@ export default async function HomePage() {
         )}
 
         {/* Balance & Ledger History */}
-        <div className="space-y-10">
+        <div className="space-y-6">
           <BalanceSection balances={balances} />
           <LedgerHistory entries={ledgerEntries ?? []} />
         </div>
