@@ -7,7 +7,6 @@ import PhotoCarousel from '@/components/baby/PhotoCarousel'
 import { BabyTopbar } from '@/components/baby/BabyTopbar'
 import { BalanceSection } from '@/components/baby/BalanceSection'
 import { calculateAge, formatDate } from '@/utils/age'
-import { formatCurrency } from '@/utils/currency'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -125,7 +124,7 @@ export default async function BabyPage() {
         </section>
 
         {/* Financial Summary */}
-        <BalanceSection balances={balances} formatAmount={formatCurrency} />
+        <BalanceSection balances={balances} />
 
         {/* Photo Carousel */}
         {carouselPhotos.length > 0 && (
