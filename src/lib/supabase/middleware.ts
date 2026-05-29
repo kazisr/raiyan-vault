@@ -30,18 +30,18 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
-  const isPublic = pathname === '/' || pathname.startsWith('/baby')
-  const isProtected = !isPublic && (pathname.startsWith('/dashboard') || pathname.startsWith('/timeline') || pathname.startsWith('/gallery') || pathname.startsWith('/medical') || pathname.startsWith('/ledger') || pathname.startsWith('/blog') || pathname.startsWith('/settings') || pathname.startsWith('/profile'))
+  const isPublic = pathname.startsWith('/baby')
+  const isProtected = !isPublic && !isAuthPage && (pathname === '/' || pathname.startsWith('/dashboard') || pathname.startsWith('/timeline') || pathname.startsWith('/gallery') || pathname.startsWith('/medical') || pathname.startsWith('/ledger') || pathname.startsWith('/blog') || pathname.startsWith('/settings') || pathname.startsWith('/profile'))
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/login'
     return NextResponse.redirect(url)
   }
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 

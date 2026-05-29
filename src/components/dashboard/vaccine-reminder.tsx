@@ -8,10 +8,9 @@ import { formatDate, isUpcoming, isPast } from '@/utils/age'
 
 interface VaccineReminderProps {
   vaccines: Vaccine[]
-  readOnly?: boolean
 }
 
-export function VaccineReminder({ vaccines, readOnly }: VaccineReminderProps) {
+export function VaccineReminder({ vaccines }: VaccineReminderProps) {
   const upcoming = vaccines
     .filter((v) => v.next_due_date && isUpcoming(v.next_due_date, 60))
     .sort((a, b) => new Date(a.next_due_date!).getTime() - new Date(b.next_due_date!).getTime())
@@ -27,11 +26,9 @@ export function VaccineReminder({ vaccines, readOnly }: VaccineReminderProps) {
             <Syringe className="w-4 h-4 text-[var(--secondary)]" />
             Vaccine Reminders
           </CardTitle>
-          {!readOnly && (
-            <Link href="/medical?tab=vaccines" className="text-xs text-[var(--primary)] hover:underline">
-              View all
-            </Link>
-          )}
+          <Link href="/medical?tab=vaccines" className="text-xs text-[var(--primary)] hover:underline">
+            View all
+          </Link>
         </div>
       </CardHeader>
       <CardContent>
