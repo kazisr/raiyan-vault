@@ -10,6 +10,7 @@ import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, AlertCircle } from 'lucid
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/hooks/use-toast'
 import { CHILD_NICKNAME } from '@/constants/child'
 
 const loginSchema = z.object({
@@ -42,8 +43,10 @@ export default function LoginPage() {
     })
     if (error) {
       setServerError(error.message)
+      toast.error(error.message)
       return
     }
+    toast.success('Welcome back!')
     router.push('/dashboard')
     router.refresh()
   }

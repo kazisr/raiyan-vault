@@ -24,9 +24,9 @@ function ToastItem({ id, message, variant, duration }: { id: string; message: st
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, x: 72, scale: 0.92 }}
-      animate={{ opacity: 1, x: 0,  scale: 1     }}
-      exit={{    opacity: 0, x: 72, scale: 0.92  }}
+      initial={{ opacity: 0, x: 72, y: -8, scale: 0.92 }}
+      animate={{ opacity: 1, x: 0,  y: 0, scale: 1    }}
+      exit={{    opacity: 0, x: 72, y: -8, scale: 0.92 }}
       transition={{ type: 'spring', damping: 22, stiffness: 320 }}
       className={[
         'flex items-center gap-3 w-[22rem] max-w-[calc(100vw-2rem)]',
@@ -55,7 +55,7 @@ export function Toaster() {
   const toasts = useToastStore((s) => s.toasts)
 
   return (
-    <div className="fixed bottom-4 right-4 z-[9999] flex flex-col gap-2 items-end pointer-events-none">
+    <div className="fixed top-4 right-4 z-[9999] flex flex-col gap-2 items-end pointer-events-none">
       <AnimatePresence mode="popLayout">
         {toasts.map((t) => (
           <div key={t.id} className="pointer-events-auto">

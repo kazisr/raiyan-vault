@@ -6,6 +6,7 @@ import { Moon, Sun, Monitor, LogOut, Download, Shield, User, Loader2 } from 'luc
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/hooks/use-toast'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
@@ -19,7 +20,9 @@ export default function SettingsPage() {
   async function signOut() {
     setSigningOut(true)
     const supabase = createClient()
-    await supabase.auth.signOut()
+    const { error } = await supabase.auth.signOut()
+    if (error) { toast.error('Failed to sign out'); setSigningOut(false); return }
+    toast.info('Signed out successfully')
     router.push('/login')
     router.refresh()
   }
