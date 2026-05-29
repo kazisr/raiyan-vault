@@ -63,8 +63,8 @@ export default async function HomePage() {
   })
 
   return (
-    <div className="min-h-screen bg-[#FAFAFA] dark:bg-gray-950 text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
-      <main className="max-w-2xl">
+    <div className="min-h-screen bg-transparent text-gray-900 dark:text-gray-100 antialiased transition-colors duration-300">
+      <main className="max-w-2xl p-8 mx-auto space-y-8">
 
         {/* Header */}
         <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-6">
