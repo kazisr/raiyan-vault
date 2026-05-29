@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { TimelineClient } from './timeline-client'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Metadata } from 'next'
+import type { EventWithImages } from '@/types/events'
 
 export const metadata: Metadata = { title: 'Timeline' }
 
@@ -17,7 +18,7 @@ async function TimelineData() {
     .eq('user_id', user.id)
     .order('event_date', { ascending: false })
 
-  return <TimelineClient events={events ?? []} userId={user.id} />
+  return <TimelineClient events={(events ?? []) as EventWithImages[]} userId={user.id} />
 }
 
 export default function TimelinePage() {

@@ -96,7 +96,15 @@ export interface Database {
           storage_path?: string
           caption?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "event_images_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       albums: {
         Row: {
@@ -152,7 +160,15 @@ export interface Database {
           caption?: string | null
           taken_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "photos_album_id_fkey"
+            columns: ["album_id"]
+            isOneToOne: false
+            referencedRelation: "albums"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       vaccines: {
         Row: {
