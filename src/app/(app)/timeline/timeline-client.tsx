@@ -40,8 +40,8 @@ export function TimelineClient({ events: initial, userId }: TimelineClientProps)
   async function handleUpdate(data: EventFormSubmit) {
     if (!editingEvent) return
     await (supabase.from('events') as any).update(data).eq('id', editingEvent.id)
-    const { data: updated } = await supabase
-      .from('events')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: updated } = await (supabase.from('events') as any)
       .select('*, event_images(*)')
       .eq('id', editingEvent.id)
       .single() as { data: EventWithImages | null }
