@@ -6,6 +6,7 @@ import AgeCounter from '@/components/baby/AgeCounter'
 import PhotoCarousel from '@/components/baby/PhotoCarousel'
 import { BalanceSection } from '@/components/baby/BalanceSection'
 import { LedgerHistory } from '@/components/baby/LedgerHistory'
+import { ThemeToggle } from '@/components/baby/ThemeToggle'
 import { formatDate, calculateAge } from '@/utils/age'
 import type { Metadata } from 'next'
 
@@ -75,8 +76,11 @@ export default async function HomePage() {
               Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
             </p>
           </div>
-          <div className="w-12 h-12 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-500">
-            <Heart className="w-6 h-6 fill-current" />
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <div className="w-10 h-10 rounded-full bg-rose-50 dark:bg-rose-900/30 flex items-center justify-center text-rose-500">
+              <Heart className="w-5 h-5 fill-current" />
+            </div>
           </div>
         </header>
 
