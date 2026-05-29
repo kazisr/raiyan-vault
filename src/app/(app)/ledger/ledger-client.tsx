@@ -44,8 +44,8 @@ const schema = z.object({
 type FormData = z.infer<typeof schema>
 
 const DEFAULT_VALUES: FormData = {
-  type: 'expense',
-  currency: 'JPY',
+  type: 'income',
+  currency: 'BDT',
   entry_date: new Date().toISOString().split('T')[0],
   category: 'Other',
   amount: '',
