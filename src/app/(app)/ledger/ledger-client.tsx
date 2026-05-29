@@ -64,7 +64,7 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<LedgerEntry | null>(null)
   const [isDeleting, setIsDeleting] = useState(false)
-  const [currencyFilter, setCurrencyFilter] = useState<'JPY' | 'BDT'>('JPY')
+  const [currencyFilter, setCurrencyFilter] = useState<'JPY' | 'BDT'>('BDT')
 
   const { register, handleSubmit, control, reset, formState: { errors, isSubmitting } } = useForm<FormData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -171,7 +171,7 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
 
       {/* Currency toggle */}
       <div className="flex gap-2">
-        {(['JPY', 'BDT'] as const).map((c) => (
+        {(['BDT', 'JPY'] as const).map((c) => (
           <button
             key={c}
             onClick={() => setCurrencyFilter(c)}
@@ -377,8 +377,8 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
                   <Select value={field.value} onValueChange={field.onChange}>
                     <SelectTrigger><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="JPY">¥ JPY</SelectItem>
                       <SelectItem value="BDT">৳ BDT</SelectItem>
+                      <SelectItem value="JPY">¥ JPY</SelectItem>
                     </SelectContent>
                   </Select>
                 )} />
