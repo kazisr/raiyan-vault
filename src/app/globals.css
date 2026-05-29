@@ -1,6 +1,9 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,300;0,14..32,400;0,14..32,500;0,14..32,600;0,14..32,700;1,14..32,400&display=swap');
 @import "tailwindcss";
 
+/* Dark mode via data-theme attribute (next-themes) */
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /* ── Material Design 3 token system ──────────────────────────────────────── */
 :root {
   /* Surface */
@@ -188,6 +191,10 @@ body {
 .text-on-surface { color: var(--on-surface); }
 .text-on-surface-variant { color: var(--on-surface-variant); }
 .text-on-surface-muted { color: var(--on-surface-muted); }
+
+/* ── Utility ─────────────────────────────────────────────────────────────── */
+.scrollbar-hide { scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
 
 /* ── Elevation ───────────────────────────────────────────────────────────── */
 .elevation-0 { box-shadow: none; }
