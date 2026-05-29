@@ -66,7 +66,7 @@ export default function AgeCounter({ dob }: Props) {
   const showHours = showDays || age.hours > 0
 
   return (
-    <div className="flex items-center justify-center gap-3 flex-wrap text-center text-white">
+    <div className="flex items-center justify-center gap-3 flex-wrap text-center">
       {showYears && <><Unit value={age.years} label="years" /><Sep /></>}
       {showMonths && <><Unit value={age.months} label="months" padded={showYears} /><Sep /></>}
       {showDays && <><Unit value={age.days} label="days" padded={showMonths} /><Sep /></>}
