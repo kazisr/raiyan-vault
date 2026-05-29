@@ -14,7 +14,7 @@ export const metadata: Metadata = {
   description: `Follow ${CHILD_NAME}'s journey — milestones, memories and more.`,
 }
 
-export const revalidate = 300
+export const dynamic = 'force-dynamic'
 
 function createPublicClient() {
   return createClient(
