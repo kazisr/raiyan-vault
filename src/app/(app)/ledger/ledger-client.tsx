@@ -99,20 +99,27 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
   }
 
   async function onSubmit(data: FormData) {
+    const payload = {
+      type: data.type,
+      amount: Number(data.amount),
+      currency: data.currency,
+      category: data.category,
+      entry_date: data.entry_date,
+      source_person: data.source_person || null,
+      description: data.description || null,
+    }
     if (editingEntry) {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: updated } = await supabase
         .from('ledger_entries')
-        .update({ ...data, amount: Number(data.amount) } as any)
+        .update(payload)
         .eq('id', editingEntry.id)
         .select()
         .single()
       if (updated) setEntries((prev) => prev.map((e) => (e.id === updated.id ? updated : e)))
     } else {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const { data: entry } = await supabase
         .from('ledger_entries')
-        .insert({ ...data, amount: Number(data.amount), user_id: userId, child_id: userId } as any)
+        .insert({ ...payload, user_id: userId, child_id: userId })
         .select()
         .single()
       if (entry) setEntries((prev) => [entry, ...prev])
