@@ -68,7 +68,7 @@ export default async function HomePage() {
 
         {/* Header */}
         <header className="flex items-center justify-between border-b border-gray-100 dark:border-gray-800 pb-10">
-          <div className="">
+          <div>
             <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-white">
               {CHILD_NAME}
             </h1>
