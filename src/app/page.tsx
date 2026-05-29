@@ -1,12 +1,12 @@
 import { createClient } from '@supabase/supabase-js'
 import Link from 'next/link'
 import { Heart, LogIn } from 'lucide-react'
-import { ThemeToggle } from '@/components/baby/ThemeToggle'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME } from '@/constants/child'
 import AgeCounter from '@/components/baby/AgeCounter'
 import PhotoCarousel from '@/components/baby/PhotoCarousel'
 import { BalanceSection } from '@/components/baby/BalanceSection'
 import { LedgerHistory } from '@/components/baby/LedgerHistory'
+import { ThemeToggle } from '@/components/baby/ThemeToggle'
 import { formatDate, calculateAge } from '@/utils/age'
 import type { Metadata } from 'next'
 
