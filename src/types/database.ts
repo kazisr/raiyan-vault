@@ -17,8 +17,27 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['child_profiles']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['child_profiles']['Insert']>
+        Insert: {
+          user_id: string
+          name: string
+          date_of_birth: string
+          blood_group?: string | null
+          birth_weight_kg?: number | null
+          birth_height_cm?: number | null
+          notes?: string | null
+          avatar_url?: string | null
+        }
+        Update: {
+          user_id?: string
+          name?: string
+          date_of_birth?: string
+          blood_group?: string | null
+          birth_weight_kg?: number | null
+          birth_height_cm?: number | null
+          notes?: string | null
+          avatar_url?: string | null
+        }
+        Relationships: []
       }
       events: {
         Row: {
@@ -35,8 +54,29 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['events']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['events']['Insert']>
+        Insert: {
+          child_id: string
+          user_id: string
+          title: string
+          description?: string | null
+          event_date: string
+          event_type: string
+          mood?: string | null
+          location?: string | null
+          tags?: string[]
+        }
+        Update: {
+          child_id?: string
+          user_id?: string
+          title?: string
+          description?: string | null
+          event_date?: string
+          event_type?: string
+          mood?: string | null
+          location?: string | null
+          tags?: string[]
+        }
+        Relationships: []
       }
       event_images: {
         Row: {
@@ -46,8 +86,17 @@ export interface Database {
           caption: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['event_images']['Row'], 'id' | 'created_at'>
-        Update: Partial<Database['public']['Tables']['event_images']['Insert']>
+        Insert: {
+          event_id: string
+          storage_path: string
+          caption?: string | null
+        }
+        Update: {
+          event_id?: string
+          storage_path?: string
+          caption?: string | null
+        }
+        Relationships: []
       }
       albums: {
         Row: {
@@ -60,8 +109,21 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['albums']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['albums']['Insert']>
+        Insert: {
+          child_id: string
+          user_id: string
+          name: string
+          description?: string | null
+          cover_path?: string | null
+        }
+        Update: {
+          child_id?: string
+          user_id?: string
+          name?: string
+          description?: string | null
+          cover_path?: string | null
+        }
+        Relationships: []
       }
       photos: {
         Row: {
@@ -74,8 +136,23 @@ export interface Database {
           taken_at: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['photos']['Row'], 'id' | 'created_at'>
-        Update: Partial<Database['public']['Tables']['photos']['Insert']>
+        Insert: {
+          album_id: string
+          child_id: string
+          user_id: string
+          storage_path: string
+          caption?: string | null
+          taken_at?: string | null
+        }
+        Update: {
+          album_id?: string
+          child_id?: string
+          user_id?: string
+          storage_path?: string
+          caption?: string | null
+          taken_at?: string | null
+        }
+        Relationships: []
       }
       vaccines: {
         Row: {
@@ -90,8 +167,25 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['vaccines']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['vaccines']['Insert']>
+        Insert: {
+          child_id: string
+          user_id: string
+          name: string
+          dose?: string | null
+          administered_date: string
+          next_due_date?: string | null
+          notes?: string | null
+        }
+        Update: {
+          child_id?: string
+          user_id?: string
+          name?: string
+          dose?: string | null
+          administered_date?: string
+          next_due_date?: string | null
+          notes?: string | null
+        }
+        Relationships: []
       }
       doctor_visits: {
         Row: {
@@ -108,8 +202,29 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['doctor_visits']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['doctor_visits']['Insert']>
+        Insert: {
+          child_id: string
+          user_id: string
+          doctor_name: string
+          hospital?: string | null
+          visit_date: string
+          diagnosis?: string | null
+          prescription_path?: string | null
+          cost?: number | null
+          notes?: string | null
+        }
+        Update: {
+          child_id?: string
+          user_id?: string
+          doctor_name?: string
+          hospital?: string | null
+          visit_date?: string
+          diagnosis?: string | null
+          prescription_path?: string | null
+          cost?: number | null
+          notes?: string | null
+        }
+        Relationships: []
       }
       growth_logs: {
         Row: {
@@ -123,8 +238,25 @@ export interface Database {
           notes: string | null
           created_at: string
         }
-        Insert: Omit<Database['public']['Tables']['growth_logs']['Row'], 'id' | 'created_at'>
-        Update: Partial<Database['public']['Tables']['growth_logs']['Insert']>
+        Insert: {
+          child_id: string
+          user_id: string
+          log_date: string
+          weight_kg?: number | null
+          height_cm?: number | null
+          head_circumference_cm?: number | null
+          notes?: string | null
+        }
+        Update: {
+          child_id?: string
+          user_id?: string
+          log_date?: string
+          weight_kg?: number | null
+          height_cm?: number | null
+          head_circumference_cm?: number | null
+          notes?: string | null
+        }
+        Relationships: []
       }
       ledger_entries: {
         Row: {
@@ -142,8 +274,31 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['ledger_entries']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['ledger_entries']['Insert']>
+        Insert: {
+          child_id: string
+          user_id: string
+          type: 'income' | 'expense'
+          amount: number
+          currency: 'JPY' | 'BDT'
+          converted_amount?: number | null
+          source_person?: string | null
+          category: string
+          description?: string | null
+          entry_date: string
+        }
+        Update: {
+          child_id?: string
+          user_id?: string
+          type?: 'income' | 'expense'
+          amount?: number
+          currency?: 'JPY' | 'BDT'
+          converted_amount?: number | null
+          source_person?: string | null
+          category?: string
+          description?: string | null
+          entry_date?: string
+        }
+        Relationships: []
       }
       blog_posts: {
         Row: {
@@ -159,8 +314,27 @@ export interface Database {
           created_at: string
           updated_at: string
         }
-        Insert: Omit<Database['public']['Tables']['blog_posts']['Row'], 'id' | 'created_at' | 'updated_at'>
-        Update: Partial<Database['public']['Tables']['blog_posts']['Insert']>
+        Insert: {
+          child_id: string
+          user_id: string
+          title: string
+          content: string
+          cover_image_path?: string | null
+          tags?: string[]
+          status?: 'draft' | 'published'
+          published_at?: string | null
+        }
+        Update: {
+          child_id?: string
+          user_id?: string
+          title?: string
+          content?: string
+          cover_image_path?: string | null
+          tags?: string[]
+          status?: 'draft' | 'published'
+          published_at?: string | null
+        }
+        Relationships: []
       }
     }
     Views: {
@@ -170,6 +344,9 @@ export interface Database {
       [_ in never]: never
     }
     Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
       [_ in never]: never
     }
   }
