@@ -30,18 +30,25 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
-  const isPublic = pathname.startsWith('/baby')
-  const isProtected = !isPublic && !isAuthPage && (pathname === '/' || pathname.startsWith('/dashboard') || pathname.startsWith('/timeline') || pathname.startsWith('/gallery') || pathname.startsWith('/medical') || pathname.startsWith('/ledger') || pathname.startsWith('/blog') || pathname.startsWith('/settings') || pathname.startsWith('/profile'))
+  const isPublic = pathname === '/' || pathname.startsWith('/baby')
+  const isProtected = !isPublic && !isAuthPage && (pathname.startsWith('/dashboard') || pathname.startsWith('/timeline') || pathname.startsWith('/gallery') || pathname.startsWith('/medical') || pathname.startsWith('/ledger') || pathname.startsWith('/blog') || pathname.startsWith('/settings') || pathname.startsWith('/profile'))
+
+  // Logged-in user visiting the public page → send them straight to the full dashboard
+  if (user && pathname === '/') {
+    const url = request.nextUrl.clone()
+    url.pathname = '/dashboard'
+    return NextResponse.redirect(url)
+  }
 
   if (!user && isProtected) {
     const url = request.nextUrl.clone()
-    url.pathname = '/login'
+    url.pathname = '/'
     return NextResponse.redirect(url)
   }
 
   if (user && isAuthPage) {
     const url = request.nextUrl.clone()
-    url.pathname = '/'
+    url.pathname = '/dashboard'
     return NextResponse.redirect(url)
   }
 
