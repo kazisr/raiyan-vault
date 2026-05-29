@@ -4,6 +4,8 @@ import React, { useState, useEffect } from 'react'
 import { cn } from '@/lib/utils'
 import { Sidebar, MobileSidebar } from './sidebar'
 import { Topbar } from './topbar'
+import { createClient } from '@/lib/supabase/client'
+import { usePermissionStore } from '@/store/permission-store'
 
 interface AppShellProps {
   children: React.ReactNode
@@ -13,6 +15,22 @@ export function AppShell({ children }: AppShellProps) {
   const [collapsed, setCollapsed] = useState(false)
   const [isMd, setIsMd] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { load, reset } = usePermissionStore()
+
+  useEffect(() => {
+    const supabase = createClient()
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) load(user.id)
+      else reset()
+    })
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) load(session.user.id)
+      else reset()
+    })
+
+    return () => subscription.unsubscribe()
+  }, [load, reset])
 
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 768px)')

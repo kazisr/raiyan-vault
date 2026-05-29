@@ -20,6 +20,12 @@ async function DashboardData() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
+  const { data: userProfile } = await supabase
+    .from('user_profiles')
+    .select('name, role')
+    .eq('user_id', user.id)
+    .single()
+
   const [photos, vaccines, visits, events, ledger, blog] = await Promise.all([
     supabase.from('photos').select('id, storage_path, caption').eq('user_id', user.id).order('created_at', { ascending: false }).limit(12),
     supabase.from('vaccines').select('*').eq('user_id', user.id).order('administered_date', { ascending: false }),
@@ -51,10 +57,10 @@ async function DashboardData() {
       {/* Header greeting */}
       <div className="flex flex-col gap-1">
         <h2 className="text-2xl font-bold text-[var(--on-surface)]">
-          Hello, Family 👋
+          Hello, {userProfile?.name ?? 'Family'} 👋
         </h2>
         <p className="text-sm text-[var(--on-surface-variant)]">
-          {CHILD_NAME} · Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
+          {userProfile?.role ? `${userProfile.role} · ` : ''}{CHILD_NAME} · Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
         </p>
       </div>
 

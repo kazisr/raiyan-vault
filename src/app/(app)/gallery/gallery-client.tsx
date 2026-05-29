@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import type { Album, Photo } from '@/types/gallery'
 import { toast } from '@/hooks/use-toast'
+import { usePermissions } from '@/hooks/use-permissions'
 
 const BUCKET = 'photos'
 
@@ -47,6 +48,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   const [uploadFiles, setUploadFiles] = useState<File[]>([])
 
   const supabase = createClient()
+  const { hasPermission } = usePermissions()
 
   const onDrop = useCallback((accepted: File[]) => {
     setUploadFiles(accepted)
@@ -145,14 +147,16 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
             </p>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={() => setNewAlbumOpen(true)}>
-            <FolderOpen className="w-4 h-4" /> New album
-          </Button>
-          <Button size="sm" onClick={() => setUploadOpen(true)}>
-            <Upload className="w-4 h-4" /> Upload
-          </Button>
-        </div>
+        {hasPermission('upload_pictures') && (
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" onClick={() => setNewAlbumOpen(true)}>
+              <FolderOpen className="w-4 h-4" /> New album
+            </Button>
+            <Button size="sm" onClick={() => setUploadOpen(true)}>
+              <Upload className="w-4 h-4" /> Upload
+            </Button>
+          </div>
+        )}
       </div>
 
       {!selectedAlbum && (
@@ -163,7 +167,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
           </TabsList>
 
           <TabsContent value="photos">
-            <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={deletePhoto} />
+            <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={hasPermission('delete_pictures') ? deletePhoto : undefined} />
           </TabsContent>
 
           <TabsContent value="albums">

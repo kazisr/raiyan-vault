@@ -20,6 +20,7 @@ import {
 import { formatDate, isUpcoming, isPast } from '@/utils/age'
 import type { Vaccine } from '@/types/medical'
 import { toast } from '@/hooks/use-toast'
+import { usePermissions } from '@/hooks/use-permissions'
 
 const schema = z.object({
   name: z.string().min(1, 'Required'),
@@ -49,6 +50,7 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
   })
 
   const supabase = createClient()
+  const { hasPermission } = usePermissions()
 
   function openAdd() {
     reset({ administered_date: new Date().toISOString().split('T')[0], dose: '', next_due_date: '', notes: '' })
@@ -118,9 +120,11 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
           {overdue.length > 0 && <Badge variant="error">{overdue.length} overdue</Badge>}
           {upcoming.length > 0 && <Badge variant="default">{upcoming.length} upcoming</Badge>}
         </div>
-        <Button size="sm" onClick={openAdd}>
-          <Plus className="w-4 h-4" /> Add vaccine
-        </Button>
+        {hasPermission('add_vaccine') && (
+          <Button size="sm" onClick={openAdd}>
+            <Plus className="w-4 h-4" /> Add vaccine
+          </Button>
+        )}
       </div>
 
       {vaccines.length === 0 ? (
@@ -161,7 +165,7 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
                     <div className="flex items-center gap-1 flex-shrink-0">
                       {isOverdue && <Badge variant="error">Overdue</Badge>}
                       {isNext && !isOverdue && <Badge variant="default">Soon</Badge>}
-                      <DropdownMenu>
+                      {(hasPermission('edit_vaccine') || hasPermission('delete_vaccine')) && <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button
                             variant="ghost"
@@ -172,18 +176,24 @@ export function VaccineTab({ vaccines, onUpdate, userId }: VaccineTabProps) {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openEdit(v)}>
-                            <Pencil className="w-3.5 h-3.5" /> Edit
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-[var(--error)] focus:text-[var(--error)]"
-                            onClick={() => setDeleteTarget(v)}
-                          >
-                            <Trash2 className="w-3.5 h-3.5" /> Delete
-                          </DropdownMenuItem>
+                          {hasPermission('edit_vaccine') && (
+                            <DropdownMenuItem onClick={() => openEdit(v)}>
+                              <Pencil className="w-3.5 h-3.5" /> Edit
+                            </DropdownMenuItem>
+                          )}
+                          {hasPermission('edit_vaccine') && hasPermission('delete_vaccine') && (
+                            <DropdownMenuSeparator />
+                          )}
+                          {hasPermission('delete_vaccine') && (
+                            <DropdownMenuItem
+                              className="text-[var(--error)] focus:text-[var(--error)]"
+                              onClick={() => setDeleteTarget(v)}
+                            >
+                              <Trash2 className="w-3.5 h-3.5" /> Delete
+                            </DropdownMenuItem>
+                          )}
                         </DropdownMenuContent>
-                      </DropdownMenu>
+                      </DropdownMenu>}
                     </div>
                   </div>
                   {v.notes && <p className="text-xs text-[var(--on-surface-muted)] mt-1.5 pl-11">{v.notes}</p>}

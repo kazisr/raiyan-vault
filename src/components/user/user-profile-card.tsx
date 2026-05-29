@@ -12,15 +12,15 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from '@/hooks/use-toast'
-
-const ROLES = ['Dad', 'Mom', 'Guardian', 'Grandparent', 'Other'] as const
+import { usePermissionStore } from '@/store/permission-store'
+import { ROLES } from '@/types/permissions'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
   username: z
     .string()
-    .min(3, 'Username must be at least 3 characters')
-    .max(32, 'Username too long')
+    .min(3, 'At least 3 characters')
+    .max(32, 'Too long')
     .regex(/^[a-zA-Z0-9_]+$/, 'Only letters, numbers and underscores'),
   role: z.string().min(1, 'Role is required'),
 })
@@ -29,8 +29,10 @@ type FormData = z.infer<typeof schema>
 
 export function UserProfileCard() {
   const [editing, setEditing] = useState(false)
-  const [loading, setLoading] = useState(true)
+  const [pageLoading, setPageLoading] = useState(true)
   const [email, setEmail] = useState('')
+  const [userId, setUserId] = useState('')
+  const { load } = usePermissionStore()
 
   const {
     register,
@@ -49,34 +51,52 @@ export function UserProfileCard() {
 
   useEffect(() => {
     const supabase = createClient()
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      if (user) {
-        const meta = user.user_metadata ?? {}
-        reset({
-          name: meta.name ?? '',
-          username: meta.username ?? '',
-          role: meta.role ?? '',
-        })
-        setEmail(user.email ?? '')
+    supabase.auth.getUser().then(async ({ data: { user } }) => {
+      if (!user) { setPageLoading(false); return }
+      setEmail(user.email ?? '')
+      setUserId(user.id)
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data: profile } = await (supabase as any)
+        .from('user_profiles')
+        .select('name, username, role')
+        .eq('user_id', user.id)
+        .single()
+
+      if (profile) {
+        reset({ name: profile.name, username: profile.username, role: profile.role })
+        if (!profile.name) setEditing(true)
+      } else {
+        setEditing(true)
       }
-      setLoading(false)
+      setPageLoading(false)
     })
   }, [reset])
 
   async function onSubmit(data: FormData) {
     const supabase = createClient()
-    const { error } = await supabase.auth.updateUser({
-      data: { name: data.name, username: data.username, role: data.role },
-    })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from('user_profiles')
+      .upsert(
+        { user_id: userId, name: data.name, username: data.username, role: data.role, email, updated_at: new Date().toISOString() },
+        { onConflict: 'user_id' }
+      )
+
     if (error) {
-      toast.error('Failed to save profile')
+      if (error.code === '23505') toast.error('Username already taken')
+      else toast.error('Failed to save profile')
       return
     }
+
+    // Reload permissions to reflect new role immediately
+    await load(userId)
+
     toast.success('Profile saved!')
     setEditing(false)
   }
 
-  if (loading) {
+  if (pageLoading) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
@@ -109,26 +129,18 @@ export function UserProfileCard() {
             <div className="space-y-1.5">
               <Label>Display name</Label>
               <Input placeholder="Raiyan's Dad" {...register('name')} disabled={!editing} />
-              {errors.name && (
-                <p className="text-xs text-[var(--error)]">{errors.name.message}</p>
-              )}
+              {errors.name && <p className="text-xs text-[var(--error)]">{errors.name.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Username</Label>
               <Input placeholder="raiyan_dad" {...register('username')} disabled={!editing} />
-              {errors.username && (
-                <p className="text-xs text-[var(--error)]">{errors.username.message}</p>
-              )}
+              {errors.username && <p className="text-xs text-[var(--error)]">{errors.username.message}</p>}
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label>Role</Label>
-            <Select
-              value={roleValue}
-              onValueChange={(v) => setValue('role', v)}
-              disabled={!editing}
-            >
+            <Select value={roleValue} onValueChange={(v) => setValue('role', v)} disabled={!editing}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your role..." />
               </SelectTrigger>
@@ -138,9 +150,7 @@ export function UserProfileCard() {
                 ))}
               </SelectContent>
             </Select>
-            {errors.role && (
-              <p className="text-xs text-[var(--error)]">{errors.role.message}</p>
-            )}
+            {errors.role && <p className="text-xs text-[var(--error)]">{errors.role.message}</p>}
           </div>
 
           {editing && (

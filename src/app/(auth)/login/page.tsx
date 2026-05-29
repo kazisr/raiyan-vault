@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { Eye, EyeOff, Loader2, Mail, Lock, ArrowRight, AlertCircle } from 'lucide-react'
+import { Eye, EyeOff, Loader2, AtSign, Lock, ArrowRight, AlertCircle } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,11 +14,19 @@ import { toast } from '@/hooks/use-toast'
 import { CHILD_NICKNAME } from '@/constants/child'
 
 const loginSchema = z.object({
-  email: z.string().email('Enter a valid email'),
+  emailOrUsername: z.string().min(1, 'Enter your email or username'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 })
 
 type LoginForm = z.infer<typeof loginSchema>
+
+async function resolveEmail(input: string): Promise<string | null> {
+  if (input.includes('@')) return input
+  const supabase = createClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data } = await (supabase as any).rpc('get_email_by_username', { p_username: input })
+  return data ?? null
+}
 
 export default function LoginPage() {
   const router = useRouter()
@@ -37,11 +45,13 @@ export default function LoginPage() {
   const loading = isSubmitting || navigating
 
   async function onSubmit(data: LoginForm) {
+    const email = await resolveEmail(data.emailOrUsername.trim())
+    if (!email) {
+      toast.error('Username not found')
+      return
+    }
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email: data.email,
-      password: data.password,
-    })
+    const { error } = await supabase.auth.signInWithPassword({ email, password: data.password })
     if (error) {
       toast.error(error.message)
       return
@@ -77,23 +87,23 @@ export default function LoginPage() {
 
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4" noValidate>
 
-        {/* Email */}
+        {/* Email or username */}
         <div className="space-y-1.5">
           <div className="relative">
-            <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--on-surface-muted)] pointer-events-none" />
+            <AtSign className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--on-surface-muted)] pointer-events-none" />
             <Input
-              id="email"
-              type="email"
-              placeholder="Email address"
-              autoComplete="email"
-              className={`pl-10 ${errors.email ? 'border-[var(--error)] focus:ring-[var(--error)]/30' : ''}`}
-              {...register('email')}
+              id="emailOrUsername"
+              type="text"
+              placeholder="Email or username"
+              autoComplete="username"
+              className={`pl-10 ${errors.emailOrUsername ? 'border-[var(--error)] focus:ring-[var(--error)]/30' : ''}`}
+              {...register('emailOrUsername')}
             />
           </div>
-          {errors.email && (
+          {errors.emailOrUsername && (
             <p className="text-xs text-[var(--error)] flex items-center gap-1">
               <AlertCircle className="w-3 h-3 flex-shrink-0" />
-              {errors.email.message}
+              {errors.emailOrUsername.message}
             </p>
           )}
         </div>
@@ -126,10 +136,7 @@ export default function LoginPage() {
             </p>
           )}
           <div className="flex justify-end">
-            <Link
-              href="/forgot-password"
-              className="text-xs text-[var(--primary)] hover:underline font-medium"
-            >
+            <Link href="/forgot-password" className="text-xs text-[var(--primary)] hover:underline font-medium">
               Forgot password?
             </Link>
           </div>
