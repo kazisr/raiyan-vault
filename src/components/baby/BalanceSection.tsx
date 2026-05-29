@@ -2,18 +2,19 @@
 
 import { useState } from 'react'
 import { GitCommitHorizontal, Eye, EyeOff } from 'lucide-react'
+import { formatCurrency } from '@/utils/currency'
+import type { Currency } from '@/utils/currency'
 
 interface Balance {
-  currency: string
+  currency: Currency
   balance: number
 }
 
 interface Props {
   balances: Balance[]
-  formatAmount: (abs: number, currency: string) => string
 }
 
-export function BalanceSection({ balances, formatAmount }: Props) {
+export function BalanceSection({ balances }: Props) {
   const [visible, setVisible] = useState(false)
 
   return (
@@ -39,7 +40,7 @@ export function BalanceSection({ balances, formatAmount }: Props) {
             {visible ? (
               <>
                 <p className={`text-xl font-semibold tracking-tight ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {formatAmount(Math.abs(balance), currency)}
+                  {formatCurrency(Math.abs(balance), currency)}
                 </p>
                 {balance < 0 && (
                   <span className="inline-block px-1.5 py-0.5 text-[10px] font-medium bg-rose-50 dark:bg-rose-900/30 text-rose-600 dark:text-rose-400 rounded mt-1">
