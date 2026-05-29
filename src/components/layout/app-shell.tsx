@@ -41,7 +41,7 @@ export function AppShell({ children }: AppShellProps) {
       >
         <Topbar onMobileMenuOpen={() => setMobileOpen(true)} />
 
-        <main className="flex-1 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 page-enter">
+        <main className="flex-1 px-4 py-4 sm:px-5 sm:py-5 md:px-6 md:py-6 animate-page-enter">
           <div className="mx-auto w-full max-w-6xl">
             {children}
           </div>

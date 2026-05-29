@@ -48,7 +48,7 @@ export function Sidebar({ collapsed = false, onToggle }: SidebarProps) {
         )}
       >
         <div className="flex-shrink-0 w-9 h-9 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center shadow-sm">
-          <Heart className="w-4.5 h-4.5 text-white" style={{ width: 18, height: 18 }} />
+          <Heart className="w-[18px] h-[18px] text-white" />
         </div>
 
         <AnimatePresence initial={false}>
@@ -245,7 +245,7 @@ export function MobileSidebar({ open, onClose }: MobileSidebarProps) {
             {/* Header */}
             <div className="flex items-center gap-3 px-5 py-5 border-b border-[var(--outline-variant)]/30">
               <div className="w-9 h-9 rounded-[var(--radius-lg)] bg-gradient-to-br from-[var(--primary)] to-[var(--secondary)] flex items-center justify-center shadow-sm">
-                <Heart style={{ width: 18, height: 18 }} className="text-white" />
+                <Heart className="w-[18px] h-[18px] text-white" />
               </div>
               <div className="flex-1">
                 <p className="text-[13px] font-semibold text-[var(--on-surface)] leading-tight">
