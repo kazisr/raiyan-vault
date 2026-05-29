@@ -2,14 +2,14 @@
 
 import { useState } from 'react'
 import { TrendingUp, TrendingDown, ChevronDown } from 'lucide-react'
-import { formatCurrency } from '@/utils/currency'
+import { formatCurrency, type Currency } from '@/utils/currency'
 import { formatDate } from '@/utils/age'
 
 interface LedgerEntry {
   id: string
   amount: number
   type: string
-  currency: string
+  currency: Currency
   category: string
   description: string | null
   entry_date: string
