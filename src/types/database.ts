@@ -316,6 +316,59 @@ export interface Database {
         }
         Relationships: []
       }
+      user_profiles: {
+        Row: {
+          id: string
+          user_id: string
+          name: string
+          username: string
+          email: string
+          role: string
+          created_by: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          user_id: string
+          name: string
+          username: string
+          email: string
+          role?: string
+          created_by?: string | null
+        }
+        Update: {
+          name?: string
+          username?: string
+          email?: string
+          role?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      role_permissions: {
+        Row: {
+          id: string
+          role: string
+          permission: string
+          granted: boolean
+          updated_by: string | null
+          updated_at: string
+        }
+        Insert: {
+          role: string
+          permission: string
+          granted: boolean
+          updated_by?: string | null
+        }
+        Update: {
+          role?: string
+          permission?: string
+          granted?: boolean
+          updated_by?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       blog_posts: {
         Row: {
           id: string
