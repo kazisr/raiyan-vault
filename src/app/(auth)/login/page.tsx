@@ -158,12 +158,12 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-[var(--on-surface-variant)]">
-        Don&apos;t have an account?{' '}
-        <Link href="/signup" className="text-[var(--primary)] font-semibold hover:underline">
-          Sign up
+      <div className="text-center">
+        <Link
+          href="/"
+          className="text-sm text-[var(--on-surface-muted)] hover:text-[var(--on-surface-variant)] hover:underline"
+        >
+          ← View Raiyan&apos;s public page
         </Link>
-      </p>
+      </div>
     </div>
-  )
-}
