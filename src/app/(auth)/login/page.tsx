@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/hooks/use-toast'
 import { CHILD_NICKNAME } from '@/constants/child'
+import { LoadingScreen } from '@/components/ui/loading-screen'
 
 const loginSchema = z.object({
   emailOrUsername: z.string().min(1, 'Enter your email or username'),
@@ -65,15 +66,8 @@ export default function LoginPage() {
   return (
     <div className="relative space-y-6">
 
-      {/* Loading overlay */}
-      {loading && (
-        <div className="absolute inset-0 -m-6 sm:-m-8 bg-[var(--surface-container-low)]/80 backdrop-blur-[2px] rounded-[var(--radius-2xl)] flex flex-col items-center justify-center gap-3 z-10">
-          <Loader2 className="w-8 h-8 animate-spin text-[var(--primary)]" />
-          <p className="text-sm font-medium text-[var(--on-surface-variant)]">
-            {navigating ? 'Opening vault…' : 'Signing in…'}
-          </p>
-        </div>
-      )}
+      {/* Full-screen footprint loader while redirecting to dashboard */}
+      {navigating && <LoadingScreen />}
 
       {/* Heading */}
       <div className="space-y-1">
