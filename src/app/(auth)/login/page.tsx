@@ -45,7 +45,7 @@ export default function LoginPage() {
   const loading = isSubmitting || navigating
 
   async function onSubmit(data: LoginForm) {
-    const email = await resolveEmail(data.emailOrUsername.trim())
+    const email = await resolveEmail(data.emailOrUsername.trim().toLowerCase())
     if (!email) {
       toast.error('Username not found')
       return

@@ -11,8 +11,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { toast } from '@/hooks/use-toast'
+import { usePermissions } from '@/hooks/use-permissions'
 import { usePermissionStore } from '@/store/permission-store'
+import { updateOwnProfileAction } from '@/app/actions/user-actions'
 import { ROLES } from '@/types/permissions'
 
 const schema = z.object({
@@ -27,11 +30,20 @@ const schema = z.object({
 
 type FormData = z.infer<typeof schema>
 
+const ROLE_COLORS: Record<string, string> = {
+  Dad:         'bg-[var(--primary-container)] text-[var(--primary)]',
+  Mom:         'bg-[var(--secondary-container)] text-[var(--secondary)]',
+  Guardian:    'bg-[var(--tertiary-container)] text-[var(--tertiary)]',
+  Grandparent: 'bg-[var(--surface-container-high)] text-[var(--on-surface-variant)]',
+  Other:       'bg-[var(--surface-container)] text-[var(--on-surface-muted)]',
+}
+
 export function UserProfileCard() {
   const [editing, setEditing] = useState(false)
   const [pageLoading, setPageLoading] = useState(true)
   const [email, setEmail] = useState('')
   const [userId, setUserId] = useState('')
+  const { hasPermission, loaded: permLoaded } = usePermissions()
   const { load } = usePermissionStore()
 
   const {
@@ -65,7 +77,8 @@ export function UserProfileCard() {
 
       if (profile) {
         reset({ name: profile.name, username: profile.username, role: profile.role })
-        if (!profile.name) setEditing(true)
+        // Open edit mode if profile is incomplete
+        if (!profile.name || !profile.username) setEditing(true)
       } else {
         setEditing(true)
       }
@@ -74,33 +87,65 @@ export function UserProfileCard() {
   }, [reset])
 
   async function onSubmit(data: FormData) {
-    const supabase = createClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
-      .from('user_profiles')
-      .upsert(
-        { user_id: userId, name: data.name, username: data.username, role: data.role, email, updated_at: new Date().toISOString() },
-        { onConflict: 'user_id' }
-      )
-
-    if (error) {
-      if (error.code === '23505') toast.error('Username already taken')
+    try {
+      await updateOwnProfileAction(data)
+      await load(userId)
+      toast.success('Profile saved!')
+      setEditing(false)
+    } catch (e: unknown) {
+      const msg = (e as Error).message
+      if (msg === 'USERNAME_TAKEN') toast.error('Username already taken')
+      else if (msg === 'Not authenticated') toast.error('Please sign in again')
       else toast.error('Failed to save profile')
-      return
     }
-
-    // Reload permissions to reflect new role immediately
-    await load(userId)
-
-    toast.success('Profile saved!')
-    setEditing(false)
   }
 
-  if (pageLoading) {
+  if (pageLoading || !permLoaded) {
     return (
       <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="w-5 h-5 animate-spin text-[var(--on-surface-muted)]" />
+        </CardContent>
+      </Card>
+    )
+  }
+
+  const isAdmin = hasPermission('manage_users')
+
+  // Read-only view for non-admin users
+  if (!isAdmin && !editing) {
+    const nameVal = watch('name')
+    const usernameVal = watch('username')
+    const roleVal = watch('role')
+    return (
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2">
+            <User className="w-4 h-4" />My Profile
+          </CardTitle>
+          <CardDescription>{email}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <p className="text-xs text-[var(--on-surface-muted)] mb-0.5">Name</p>
+                <p className="text-sm font-medium text-[var(--on-surface)]">{nameVal || '—'}</p>
+              </div>
+              <div>
+                <p className="text-xs text-[var(--on-surface-muted)] mb-0.5">Username</p>
+                <p className="text-sm font-medium text-[var(--on-surface)]">{usernameVal ? `@${usernameVal}` : '—'}</p>
+              </div>
+            </div>
+            <div>
+              <p className="text-xs text-[var(--on-surface-muted)] mb-1">Role</p>
+              {roleVal ? (
+                <Badge className={`text-xs font-medium px-2.5 py-0.5 rounded-full border-0 ${ROLE_COLORS[roleVal] ?? ''}`}>
+                  {roleVal}
+                </Badge>
+              ) : <p className="text-sm text-[var(--on-surface-muted)]">—</p>}
+            </div>
+          </div>
         </CardContent>
       </Card>
     )
@@ -116,7 +161,7 @@ export function UserProfileCard() {
             </CardTitle>
             <CardDescription className="mt-0.5">{email}</CardDescription>
           </div>
-          {!editing && (
+          {isAdmin && !editing && (
             <Button variant="ghost" size="icon-sm" onClick={() => setEditing(true)}>
               <Pencil className="w-4 h-4" />
             </Button>
@@ -128,19 +173,19 @@ export function UserProfileCard() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-1.5">
               <Label>Display name</Label>
-              <Input placeholder="Raiyan's Dad" {...register('name')} disabled={!editing} />
+              <Input placeholder="Raiyan's Dad" {...register('name')} />
               {errors.name && <p className="text-xs text-[var(--error)]">{errors.name.message}</p>}
             </div>
             <div className="space-y-1.5">
               <Label>Username</Label>
-              <Input placeholder="raiyan_dad" {...register('username')} disabled={!editing} />
+              <Input placeholder="raiyan_dad" {...register('username')} />
               {errors.username && <p className="text-xs text-[var(--error)]">{errors.username.message}</p>}
             </div>
           </div>
 
           <div className="space-y-1.5">
             <Label>Role</Label>
-            <Select value={roleValue} onValueChange={(v) => setValue('role', v)} disabled={!editing}>
+            <Select value={roleValue} onValueChange={(v) => setValue('role', v)}>
               <SelectTrigger>
                 <SelectValue placeholder="Select your role..." />
               </SelectTrigger>
@@ -153,17 +198,17 @@ export function UserProfileCard() {
             {errors.role && <p className="text-xs text-[var(--error)]">{errors.role.message}</p>}
           </div>
 
-          {editing && (
-            <div className="flex gap-2">
-              <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
-                Save
-              </Button>
+          <div className="flex gap-2">
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting && <Loader2 className="w-4 h-4 animate-spin" />}
+              Save
+            </Button>
+            {isAdmin && (
               <Button type="button" variant="outline" onClick={() => setEditing(false)}>
                 Cancel
               </Button>
-            </div>
-          )}
+            )}
+          </div>
         </form>
       </CardContent>
     </Card>
