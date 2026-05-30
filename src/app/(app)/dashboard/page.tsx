@@ -8,8 +8,7 @@ import { BalanceSection } from '@/components/baby/BalanceSection'
 import { LedgerHistory } from '@/components/baby/LedgerHistory'
 import PhotoCarousel from '@/components/baby/PhotoCarousel'
 import { Skeleton } from '@/components/ui/skeleton'
-import { CHILD_NAME, CHILD_DOB } from '@/constants/child'
-import { formatDate } from '@/utils/age'
+import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME } from '@/constants/child'
 import { Camera } from 'lucide-react'
 import type { Metadata } from 'next'
 
@@ -55,13 +54,13 @@ async function DashboardData() {
   return (
     <div className="space-y-6">
       {/* Header greeting */}
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-0.5">
+        <p className="text-sm font-medium text-[var(--primary)]">
+          {userProfile?.role ? `${userProfile.role} of ${CHILD_NICKNAME}` : CHILD_NICKNAME}
+        </p>
         <h2 className="text-2xl font-bold text-[var(--on-surface)]">
           Hello, {userProfile?.name ?? 'Family'} 👋
         </h2>
-        <p className="text-sm text-[var(--on-surface-variant)]">
-          {userProfile?.role ? `${userProfile.role} · ` : ''}{CHILD_NAME} · Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
-        </p>
       </div>
 
       {/* Age counter with live hrs:min:sec */}

@@ -20,6 +20,49 @@ async function requireDad() {
   return user
 }
 
+export async function updateOwnProfileAction(data: {
+  name: string
+  username: string
+  role: string
+}) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) throw new Error('Not authenticated')
+
+  // Read existing profile to determine current role (non-Dad cannot self-elevate)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { data: existing } = await (supabase as any)
+    .from('user_profiles')
+    .select('role')
+    .eq('user_id', user.id)
+    .single()
+
+  const isDad = !existing || existing.role === 'Dad'
+  // Non-Dad users keep their current role; only Dad can set/change role
+  const safeRole = isDad ? data.role : (existing?.role ?? 'Other')
+
+  const admin = createAdminClient()
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const { error } = await (admin as any).from('user_profiles').upsert(
+    {
+      user_id: user.id,
+      name: data.name,
+      username: data.username.toLowerCase(),
+      email: user.email!,
+      role: safeRole,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'user_id' }
+  )
+
+  if (error) {
+    if (error.code === '23505') throw new Error('USERNAME_TAKEN')
+    throw new Error(error.message)
+  }
+
+  return { success: true, role: safeRole }
+}
+
 export async function createUserAction(data: {
   email: string
   password: string
