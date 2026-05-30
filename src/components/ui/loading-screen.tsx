@@ -17,7 +17,6 @@ const TOES = [
 
 const DASH = 200   // virtual path length (matches pathLength attr)
 const CYCLE = 2.6  // full animation cycle in seconds
-const TOE_LAG = 0.45  // seconds after main pad starts before toes begin
 
 function BabyFoot({ flip }: { flip?: boolean }) {
   // Negative --dash on the flipped foot reverses the stroke-dashoffset direction,
@@ -58,7 +57,7 @@ function BabyFoot({ flip }: { flip?: boolean }) {
         style={{ ...anim(DASH), animationDelay: '0s' }}
       />
 
-      {/* Toes — staggered within the foot, identical timing between both feet */}
+      {/* Toes — same timing as main pad so everything starts and ends together */}
       {TOES.map((toe, i) => {
         const circ = parseFloat((2 * Math.PI * toe.r).toFixed(2))
         return (
@@ -72,11 +71,7 @@ function BabyFoot({ flip }: { flip?: boolean }) {
             stroke="currentColor"
             strokeWidth="2"
             strokeDasharray={circ}
-            style={{
-              ...anim(circ),
-              animationDelay: `${TOE_LAG + i * 0.09}s`,
-              animationTimingFunction: 'ease-out',
-            }}
+            style={{ ...anim(circ), animationDelay: '0s' }}
           />
         )
       })}
