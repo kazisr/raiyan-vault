@@ -202,4 +202,12 @@
     0%   { background-position: -200% 0; }
     100% { background-position: 200% 0; }
   }
+
+  @keyframes baby-draw {
+    0%   { stroke-dashoffset: var(--dash); opacity: 0; }
+    8%   { opacity: 1; }
+    52%  { stroke-dashoffset: 0; opacity: 1; }
+    74%  { stroke-dashoffset: 0; opacity: 0; }
+    100% { stroke-dashoffset: var(--dash); opacity: 0; }
+  }
 }
