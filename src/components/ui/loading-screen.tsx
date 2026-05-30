@@ -17,17 +17,20 @@ const TOES = [
 
 const DASH = 200   // virtual path length (matches pathLength attr)
 const CYCLE = 2.6  // full animation cycle in seconds
-const TOE_LAG = 0.45  // seconds after main pad starts before toes begin
 
 function BabyFoot({ flip }: { flip?: boolean }) {
-  const base: React.CSSProperties = {
+  // Negative --dash on the flipped foot reverses the stroke-dashoffset direction,
+  // so both feet trace clockwise (right foot: +dash→0, left foot: -dash→0).
+  const sign = flip ? -1 : 1
+
+  const anim = (dash: number): React.CSSProperties => ({
     animationName: 'baby-draw',
     animationDuration: `${CYCLE}s`,
     animationIterationCount: 'infinite',
     animationFillMode: 'backwards',
     animationTimingFunction: 'ease-in-out',
-    '--dash': DASH,
-  } as React.CSSProperties
+    '--dash': sign * dash,
+  } as React.CSSProperties)
 
   return (
     <svg
@@ -51,10 +54,10 @@ function BabyFoot({ flip }: { flip?: boolean }) {
         strokeLinecap="round"
         strokeLinejoin="round"
         strokeDasharray={DASH}
-        style={{ ...base, animationDelay: '0s' }}
+        style={{ ...anim(DASH), animationDelay: '0s' }}
       />
 
-      {/* Toes — staggered within the foot, but identical between both feet */}
+      {/* Toes — same timing as main pad so everything starts and ends together */}
       {TOES.map((toe, i) => {
         const circ = parseFloat((2 * Math.PI * toe.r).toFixed(2))
         return (
@@ -68,12 +71,7 @@ function BabyFoot({ flip }: { flip?: boolean }) {
             stroke="currentColor"
             strokeWidth="2"
             strokeDasharray={circ}
-            style={{
-              ...base,
-              '--dash': circ,
-              animationDelay: `${TOE_LAG + i * 0.09}s`,
-              animationTimingFunction: 'ease-out',
-            } as React.CSSProperties}
+            style={{ ...anim(circ), animationDelay: '0s' }}
           />
         )
       })}
