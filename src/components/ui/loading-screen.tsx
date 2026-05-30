@@ -1,13 +1,13 @@
 import React from 'react'
 import { CHILD_NICKNAME } from '@/constants/child'
 
-// Both paths drawn in the same CW direction (Y-down screen coords).
-// Right foot: big toe upper-left, pinky upper-right.
-// Left foot:  x-mirrored coordinates (62-x), same traversal direction → also CW.
+// RIGHT_PATH traverses CW in screen (Y-down) coords: heel → inner-left up → top → outer-right down.
+// LEFT_PATH is the x-mirrored right path (62-x) with its traversal REVERSED so it is also CW.
+// Reversal: each cubic bezier flipped (endpoint becomes start, control points swapped).
 const RIGHT_PATH =
   'M 31 78 C 17 77 9 64 11 50 C 13 36 19 24 28 20 C 33 17 41 17 46 21 C 54 27 56 44 54 58 C 52 71 45 78 31 78 Z'
 const LEFT_PATH =
-  'M 31 78 C 45 77 53 64 51 50 C 49 36 43 24 34 20 C 29 17 21 17 16 21 C 8 27 6 44 8 58 C 10 71 17 78 31 78 Z'
+  'M 31 78 C 17 78 10 71 8 58 C 6 44 8 27 16 21 C 21 17 29 17 34 20 C 43 24 49 36 51 50 C 53 64 45 77 31 78 Z'
 
 // Right foot toes: big toe left, pinky right (viewBox 0 0 62 84)
 const RIGHT_TOES = [
