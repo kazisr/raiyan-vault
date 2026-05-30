@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { ThemeProvider } from '@/components/ui/theme-provider'
 import { Toaster } from '@/components/ui/toaster'
+import NextTopLoader from 'nextjs-toploader'
 import { CHILD_NAME } from '@/constants/child'
 
 const inter = Inter({
@@ -30,6 +31,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
       <body className="min-h-screen bg-[var(--background)] antialiased p-4 sm:p-6">
+        <NextTopLoader
+          color="var(--primary)"
+          shadow={false}
+          showSpinner={false}
+          height={3}
+        />
         <ThemeProvider>
           {children}
           <Toaster />
