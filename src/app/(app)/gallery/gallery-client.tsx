@@ -206,7 +206,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
       )}
 
       {selectedAlbum && (
-        <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={deletePhoto} />
+        <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={hasPermission('delete_pictures') ? deletePhoto : undefined} />
       )}
 
       {/* New Album Dialog */}
@@ -275,14 +275,14 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
       {/* Lightbox */}
       <AnimatePresence>
         {lightboxPhoto && (
-          <LightboxOverlay photo={lightboxPhoto} onClose={() => setLightboxPhoto(null)} onDelete={deletePhoto} />
+          <LightboxOverlay photo={lightboxPhoto} onClose={() => setLightboxPhoto(null)} onDelete={hasPermission('delete_pictures') ? deletePhoto : undefined} />
         )}
       </AnimatePresence>
     </div>
   )
 }
 
-function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: () => void; onDelete: (photo: Photo) => void }) {
+function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: () => void; onDelete?: (photo: Photo) => void }) {
   const url = useSignedUrl(photo.storage_path)
   return (
     <motion.div
@@ -298,16 +298,18 @@ function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: 
       >
         <X className="w-6 h-6" />
       </button>
-      <button
-        className="absolute top-4 left-4 text-white/60 hover:text-red-400 p-2 transition-colors"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
-        }}
-        title="Delete photo"
-      >
-        <Trash2 className="w-5 h-5" />
-      </button>
+      {onDelete && (
+        <button
+          className="absolute top-4 left-4 text-white/60 hover:text-red-400 p-2 transition-colors"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
+          }}
+          title="Delete photo"
+        >
+          <Trash2 className="w-5 h-5" />
+        </button>
+      )}
       {url ? (
         <motion.img
           initial={{ scale: 0.9 }}
@@ -324,7 +326,7 @@ function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: 
   )
 }
 
-function PhotoCard({ photo, index, onClick, onDelete }: { photo: Photo; index: number; onClick: () => void; onDelete: (p: Photo) => void }) {
+function PhotoCard({ photo, index, onClick, onDelete }: { photo: Photo; index: number; onClick: () => void; onDelete?: (p: Photo) => void }) {
   const url = useSignedUrl(photo.storage_path)
   return (
     <motion.div
@@ -348,7 +350,7 @@ function PhotoCard({ photo, index, onClick, onDelete }: { photo: Photo; index: n
           </div>
         )}
       </div>
-      <button
+      {onDelete && <button
         className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/40 hover:bg-red-500 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all z-10"
         onClick={(e) => {
           e.stopPropagation()
@@ -357,12 +359,12 @@ function PhotoCard({ photo, index, onClick, onDelete }: { photo: Photo; index: n
         title="Delete photo"
       >
         <Trash2 className="w-3.5 h-3.5" />
-      </button>
+      </button>}
     </motion.div>
   )
 }
 
-function PhotoGrid({ photos, onPhotoClick, onDelete }: { photos: Photo[]; onPhotoClick: (p: Photo) => void; onDelete: (p: Photo) => void }) {
+function PhotoGrid({ photos, onPhotoClick, onDelete }: { photos: Photo[]; onPhotoClick: (p: Photo) => void; onDelete?: (p: Photo) => void }) {
   if (photos.length === 0) {
     return (
       <div className="text-center py-16">
