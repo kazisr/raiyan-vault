@@ -12,11 +12,38 @@ import { Separator } from '@/components/ui/separator'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { UserProfileCard } from '@/components/user/user-profile-card'
+import { usePermissions } from '@/hooks/use-permissions'
 
 export default function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const router = useRouter()
   const [signingOut, setSigningOut] = useState(false)
+  const [exporting, setExporting] = useState(false)
+  const { profile } = usePermissions()
+
+  const isAdmin = !profile || profile.role === 'Dad'
+
+  async function handleExport() {
+    setExporting(true)
+    try {
+      const res = await fetch('/api/export')
+      if (!res.ok) { toast.error('Export failed'); return }
+      const blob = await res.blob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `vault-export-${new Date().toISOString().split('T')[0]}.zip`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      toast.success('Export downloaded!')
+    } catch {
+      toast.error('Export failed')
+    } finally {
+      setExporting(false)
+    }
+  }
 
   async function signOut() {
     setSigningOut(true)
@@ -119,25 +146,30 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* Data */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Download className="w-4 h-4" />Data
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-between py-1">
-            <div>
-              <p className="text-sm font-medium text-[var(--on-surface)]">Export data</p>
-              <p className="text-xs text-[var(--on-surface-muted)]">Download all vault data as JSON</p>
+      {/* Data — admin only */}
+      {isAdmin && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Download className="w-4 h-4" />Data
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center justify-between py-1">
+              <div>
+                <p className="text-sm font-medium text-[var(--on-surface)]">Export vault</p>
+                <p className="text-xs text-[var(--on-surface-muted)]">
+                  Download full backup — all data &amp; images as a zip
+                </p>
+              </div>
+              <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
+                {exporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                {exporting ? 'Exporting…' : 'Export'}
+              </Button>
             </div>
-            <Button variant="outline" size="sm" disabled>
-              <Download className="w-4 h-4" /> Export
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+      )}
 
       {/* About */}
       <div className="text-center text-xs text-[var(--on-surface-muted)] pb-4">

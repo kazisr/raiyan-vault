@@ -57,9 +57,12 @@ const DEFAULT_VALUES: FormData = {
 interface LedgerClientProps {
   entries: LedgerEntry[]
   userId: string
+  canAdd?: boolean
+  canEdit?: boolean
+  canDelete?: boolean
 }
 
-export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps) {
+export function LedgerClient({ entries: initEntries, userId, canAdd = true, canEdit = true, canDelete = true }: LedgerClientProps) {
   const [entries, setEntries] = useState<LedgerEntry[]>(initEntries)
   const [open, setOpen] = useState(false)
   const [editingEntry, setEditingEntry] = useState<LedgerEntry | null>(null)
@@ -171,9 +174,11 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
           <h2 className="text-lg font-semibold text-[var(--on-surface)]">Financial Ledger</h2>
           <p className="text-sm text-[var(--on-surface-muted)]">Track expenses and income</p>
         </div>
-        <Button size="sm" onClick={openAdd}>
-          <Plus className="w-4 h-4" /> Add entry
-        </Button>
+        {canAdd && (
+          <Button size="sm" onClick={openAdd}>
+            <Plus className="w-4 h-4" /> Add entry
+          </Button>
+        )}
       </div>
 
       {/* Currency toggle */}
@@ -324,7 +329,7 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
                           }`}>
                             {entry.type === 'income' ? '+' : '-'}{formatCurrency(entry.amount, entry.currency)}
                           </p>
-                          <DropdownMenu>
+                          {(canEdit || canDelete) && <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button
                                 variant="ghost"
@@ -335,18 +340,22 @@ export function LedgerClient({ entries: initEntries, userId }: LedgerClientProps
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                              <DropdownMenuItem onClick={() => openEdit(entry)}>
-                                <Pencil className="w-3.5 h-3.5" /> Edit
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-[var(--error)] focus:text-[var(--error)]"
-                                onClick={() => setDeleteTarget(entry)}
-                              >
-                                <Trash2 className="w-3.5 h-3.5" /> Delete
-                              </DropdownMenuItem>
+                              {canEdit && (
+                                <DropdownMenuItem onClick={() => openEdit(entry)}>
+                                  <Pencil className="w-3.5 h-3.5" /> Edit
+                                </DropdownMenuItem>
+                              )}
+                              {canEdit && canDelete && <DropdownMenuSeparator />}
+                              {canDelete && (
+                                <DropdownMenuItem
+                                  className="text-[var(--error)] focus:text-[var(--error)]"
+                                  onClick={() => setDeleteTarget(entry)}
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" /> Delete
+                                </DropdownMenuItem>
+                              )}
                             </DropdownMenuContent>
-                          </DropdownMenu>
+                          </DropdownMenu>}
                         </div>
                       </div>
                     </CardContent>
