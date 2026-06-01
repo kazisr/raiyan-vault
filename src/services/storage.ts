@@ -25,7 +25,7 @@ export async function deleteFile(path: string): Promise<boolean> {
   return !error
 }
 
-export function generatePhotoPath(userId: string, filename: string): string {
+export function generatePhotoPath(_userId: string, filename: string): string {
   const ext = filename.split('.').pop()
-  return `${userId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
+  return `shared/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
 }

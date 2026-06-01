@@ -14,7 +14,6 @@ async function BlogData() {
   const { data: posts } = await supabase
     .from('blog_posts')
     .select('*')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
   return <BlogClient posts={posts ?? []} userId={user.id} />
