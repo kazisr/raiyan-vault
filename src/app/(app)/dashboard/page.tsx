@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { AgeCounter } from '@/components/dashboard/age-counter'
 import { QuickStats } from '@/components/dashboard/quick-stats'
 import { VaccineReminder } from '@/components/dashboard/vaccine-reminder'
@@ -19,35 +20,65 @@ async function DashboardData() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: userProfile } = await supabase
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const admin = createAdminClient() as any
+
+  const { data: userProfile } = await admin
     .from('user_profiles')
     .select('name, role')
     .eq('user_id', user.id)
     .single()
 
+  const isDad = !userProfile || userProfile.role === 'Dad'
+
+  // Resolve per-section permissions for non-Dad users
+  let canViewLedger = isDad
+  let canViewMedical = isDad
+
+  if (!isDad) {
+    const { data: perms } = await admin
+      .from('role_permissions')
+      .select('permission, granted')
+      .eq('role', userProfile.role)
+      .in('permission', ['view_ledger', 'view_medical'])
+
+    const permMap: Record<string, boolean> = Object.fromEntries(
+      (perms ?? []).map((p: { permission: string; granted: boolean }) => [p.permission, p.granted])
+    )
+    canViewLedger  = permMap['view_ledger']  === true
+    canViewMedical = permMap['view_medical'] === true
+  }
+
+  // Fetch all shared vault data using admin client (bypasses RLS)
   const [photos, vaccines, visits, events, ledger, blog] = await Promise.all([
-    supabase.from('photos').select('id, storage_path, caption').eq('user_id', user.id).order('created_at', { ascending: false }).limit(12),
-    supabase.from('vaccines').select('*').eq('user_id', user.id).order('administered_date', { ascending: false }),
-    supabase.from('doctor_visits').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
-    supabase.from('events').select('*').eq('user_id', user.id).order('event_date', { ascending: false }).limit(5),
-    supabase.from('ledger_entries').select('*').eq('user_id', user.id).order('entry_date', { ascending: false }),
-    supabase.from('blog_posts').select('id', { count: 'exact', head: true }).eq('user_id', user.id),
+    admin.from('photos').select('id, storage_path, caption').order('created_at', { ascending: false }).limit(12),
+    canViewMedical
+      ? admin.from('vaccines').select('*').order('administered_date', { ascending: false })
+      : Promise.resolve({ data: [] }),
+    canViewMedical
+      ? admin.from('doctor_visits').select('id', { count: 'exact', head: true })
+      : Promise.resolve({ count: 0 }),
+    admin.from('events').select('*').order('event_date', { ascending: false }).limit(5),
+    canViewLedger
+      ? admin.from('ledger_entries').select('*').order('entry_date', { ascending: false })
+      : Promise.resolve({ data: [] }),
+    admin.from('blog_posts').select('id', { count: 'exact', head: true }),
   ])
 
   const photosWithUrls = await Promise.all(
-    (photos.data ?? []).map(async (photo) => {
-      const { data } = await supabase.storage.from('photos').createSignedUrl(photo.storage_path, 3600)
+    (photos.data ?? []).map(async (photo: { id: string; storage_path: string; caption: string | null }) => {
+      const { data } = await admin.storage.from('photos').createSignedUrl(photo.storage_path, 3600)
       return { ...photo, url: data?.signedUrl ?? null }
     })
   )
   const carouselPhotos = photosWithUrls
-    .filter((p) => p.url !== null)
-    .map((p) => ({ id: p.id, url: p.url!, caption: p.caption }))
+    .filter((p: { url: string | null }) => p.url !== null)
+    .map((p: { id: string; url: string; caption: string | null }) => ({ id: p.id, url: p.url!, caption: p.caption }))
 
   const balances = (['BDT', 'JPY'] as const).map((currency) => {
-    const rows = (ledger.data ?? []).filter((e) => e.currency === currency)
-    const income = rows.filter((e) => e.type === 'income').reduce((s, e) => s + e.amount, 0)
-    const expense = rows.filter((e) => e.type === 'expense').reduce((s, e) => s + e.amount, 0)
+    const rows = (ledger.data ?? []).filter((e: { currency: string }) => e.currency === currency)
+    const income  = rows.filter((e: { type: string }) => e.type === 'income').reduce((s: number, e: { amount: number }) => s + e.amount, 0)
+    const expense = rows.filter((e: { type: string }) => e.type === 'expense').reduce((s: number, e: { amount: number }) => s + e.amount, 0)
     return { currency, balance: income - expense }
   })
 
@@ -76,7 +107,7 @@ async function DashboardData() {
 
       {/* Bottom grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <VaccineReminder vaccines={vaccines.data ?? []} />
+        {canViewMedical && <VaccineReminder vaccines={vaccines.data ?? []} />}
         <RecentEvents events={events.data ?? []} />
       </div>
 
@@ -94,8 +125,12 @@ async function DashboardData() {
       )}
 
       {/* Balance + full ledger history */}
-      <BalanceSection balances={balances} />
-      <LedgerHistory entries={ledger.data ?? []} />
+      {canViewLedger && (
+        <>
+          <BalanceSection balances={balances} />
+          <LedgerHistory entries={ledger.data ?? []} />
+        </>
+      )}
     </div>
   )
 }
