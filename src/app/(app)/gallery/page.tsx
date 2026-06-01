@@ -14,13 +14,11 @@ async function GalleryData() {
   const { data: albums } = await supabase
     .from('albums')
     .select('*')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
   const { data: photos } = await supabase
     .from('photos')
     .select('*')
-    .eq('user_id', user.id)
     .order('created_at', { ascending: false })
 
   return <GalleryClient albums={albums ?? []} photos={photos ?? []} userId={user.id} />

@@ -17,13 +17,13 @@ export default async function ProfilePage() {
   const { data: profile } = await supabase
     .from('child_profiles')
     .select('*')
-    .eq('user_id', user!.id)
+    .order('created_at', { ascending: true })
+    .limit(1)
     .single() as { data: Child | null }
 
   const { data: growthLogs } = await supabase
     .from('growth_logs')
     .select('*')
-    .eq('user_id', user!.id)
     .order('log_date', { ascending: false })
     .limit(1) as { data: GrowthLog[] | null }
 

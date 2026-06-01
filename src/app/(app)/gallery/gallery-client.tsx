@@ -81,7 +81,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
     let uploaded = 0
     try {
       for (const file of uploadFiles) {
-        const path = `${userId}/${Date.now()}-${file.name}`
+        const path = `shared/${Date.now()}-${file.name}`
         const { error: uploadError } = await supabase.storage
           .from('photos')
           .upload(path, file, { cacheControl: '3600' })

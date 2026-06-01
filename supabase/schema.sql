@@ -212,64 +212,67 @@ ALTER TABLE growth_logs    ENABLE ROW LEVEL SECURITY;
 ALTER TABLE ledger_entries ENABLE ROW LEVEL SECURITY;
 ALTER TABLE blog_posts     ENABLE ROW LEVEL SECURITY;
 
+-- All authenticated users share access to all vault data (single-family vault)
+
 -- child_profiles
-CREATE POLICY "Users can CRUD own child profiles"
+CREATE POLICY "Authenticated users can CRUD child profiles"
   ON child_profiles FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- events
-CREATE POLICY "Users can CRUD own events"
+CREATE POLICY "Authenticated users can CRUD events"
   ON events FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
--- event_images (via event ownership)
-CREATE POLICY "Users can CRUD own event images"
+-- event_images
+CREATE POLICY "Authenticated users can CRUD event images"
   ON event_images FOR ALL
-  USING (EXISTS (SELECT 1 FROM events WHERE events.id = event_images.event_id AND events.user_id = auth.uid()));
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- albums
-CREATE POLICY "Users can CRUD own albums"
+CREATE POLICY "Authenticated users can CRUD albums"
   ON albums FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- photos
-CREATE POLICY "Users can CRUD own photos"
+CREATE POLICY "Authenticated users can CRUD photos"
   ON photos FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- vaccines
-CREATE POLICY "Users can CRUD own vaccines"
+CREATE POLICY "Authenticated users can CRUD vaccines"
   ON vaccines FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- doctor_visits
-CREATE POLICY "Users can CRUD own doctor visits"
+CREATE POLICY "Authenticated users can CRUD doctor visits"
   ON doctor_visits FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- growth_logs
-CREATE POLICY "Users can CRUD own growth logs"
+CREATE POLICY "Authenticated users can CRUD growth logs"
   ON growth_logs FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- ledger_entries
-CREATE POLICY "Users can CRUD own ledger entries"
+CREATE POLICY "Authenticated users can CRUD ledger entries"
   ON ledger_entries FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- blog_posts
-CREATE POLICY "Users can CRUD own blog posts"
+CREATE POLICY "Authenticated users can CRUD blog posts"
   ON blog_posts FOR ALL
-  USING (auth.uid() = user_id)
-  WITH CHECK (auth.uid() = user_id);
+  USING (auth.uid() IS NOT NULL)
+  WITH CHECK (auth.uid() IS NOT NULL);
 
 -- ============================================================
 -- STORAGE BUCKET (run via Supabase dashboard or CLI)
@@ -277,11 +280,14 @@ CREATE POLICY "Users can CRUD own blog posts"
 -- INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 -- VALUES ('photos', 'photos', FALSE, 10485760, ARRAY['image/jpeg','image/png','image/webp','image/gif']);
 --
--- CREATE POLICY "Users can upload own photos" ON storage.objects FOR INSERT
---   WITH CHECK (bucket_id = 'photos' AND auth.uid()::text = (storage.foldername(name))[1]);
+-- All authenticated users share the same storage space (single-family vault).
+-- Files are stored under shared/ prefix instead of per-user folders.
 --
--- CREATE POLICY "Users can read own photos" ON storage.objects FOR SELECT
---   USING (bucket_id = 'photos' AND auth.uid()::text = (storage.foldername(name))[1]);
+-- CREATE POLICY "Authenticated users can upload photos" ON storage.objects FOR INSERT
+--   WITH CHECK (bucket_id = 'photos' AND auth.uid() IS NOT NULL);
 --
--- CREATE POLICY "Users can delete own photos" ON storage.objects FOR DELETE
---   USING (bucket_id = 'photos' AND auth.uid()::text = (storage.foldername(name))[1]);
+-- CREATE POLICY "Authenticated users can read photos" ON storage.objects FOR SELECT
+--   USING (bucket_id = 'photos' AND auth.uid() IS NOT NULL);
+--
+-- CREATE POLICY "Authenticated users can delete photos" ON storage.objects FOR DELETE
+--   USING (bucket_id = 'photos' AND auth.uid() IS NOT NULL);

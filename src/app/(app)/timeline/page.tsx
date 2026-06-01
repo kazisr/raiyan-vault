@@ -15,7 +15,6 @@ async function TimelineData() {
   const { data: events } = await supabase
     .from('events')
     .select('*, event_images(*)')
-    .eq('user_id', user.id)
     .order('event_date', { ascending: false })
 
   return <TimelineClient events={(events ?? []) as EventWithImages[]} userId={user.id} />

@@ -12,9 +12,9 @@ async function MedicalData() {
   if (!user) return null
 
   const [vaccines, visits, growthLogs] = await Promise.all([
-    supabase.from('vaccines').select('*').eq('user_id', user.id).order('administered_date', { ascending: false }),
-    supabase.from('doctor_visits').select('*').eq('user_id', user.id).order('visit_date', { ascending: false }),
-    supabase.from('growth_logs').select('*').eq('user_id', user.id).order('log_date', { ascending: true }),
+    supabase.from('vaccines').select('*').order('administered_date', { ascending: false }),
+    supabase.from('doctor_visits').select('*').order('visit_date', { ascending: false }),
+    supabase.from('growth_logs').select('*').order('log_date', { ascending: true }),
   ])
 
   return (
