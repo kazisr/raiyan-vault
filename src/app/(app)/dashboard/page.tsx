@@ -51,7 +51,7 @@ async function DashboardData() {
 
   // Fetch all shared vault data using admin client (bypasses RLS)
   const [photos, vaccines, visits, events, ledger, blog] = await Promise.all([
-    admin.from('photos').select('id, storage_path, caption').order('created_at', { ascending: false }).limit(12),
+    admin.from('photos').select('id, storage_path, caption').eq('is_featured', true).order('created_at', { ascending: false }),
     canViewMedical
       ? admin.from('vaccines').select('*').order('administered_date', { ascending: false })
       : Promise.resolve({ data: [] }),
@@ -116,7 +116,7 @@ async function DashboardData() {
         <section className="space-y-3">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--on-surface-muted)]">
             <Camera className="w-4 h-4" />
-            <h2>Recent Photos</h2>
+            <h2>Featured Photos</h2>
           </div>
           <div className="rounded-[var(--radius-lg)] overflow-hidden">
             <PhotoCarousel photos={carouselPhotos} />

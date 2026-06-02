@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, FolderOpen, Images, X, ChevronLeft, Loader2, ImageIcon, Trash2 } from 'lucide-react'
+import { Upload, FolderOpen, Images, X, ChevronLeft, Loader2, ImageIcon, Trash2, Star } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -124,9 +124,26 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
     toast.success('Photo deleted')
   }
 
+  async function toggleFeatured(photo: Photo) {
+    const newVal = !photo.is_featured
+    const { error } = await supabase
+      .from('photos')
+      .update({ is_featured: newVal })
+      .eq('id', photo.id)
+    if (error) { toast.error('Failed to update featured status'); return }
+    setPhotos((prev) => prev.map((p) => p.id === photo.id ? { ...p, is_featured: newVal } : p))
+    if (lightboxPhoto?.id === photo.id) setLightboxPhoto((prev) => prev ? { ...prev, is_featured: newVal } : null)
+    toast.success(newVal ? 'Added to featured' : 'Removed from featured')
+  }
+
   const displayPhotos = selectedAlbum
     ? photos.filter((p) => p.album_id === selectedAlbum.id)
     : photos
+
+  const featuredPhotos = photos.filter((p) => p.is_featured)
+
+  const canDelete = hasPermission('delete_pictures')
+  const canUpload = hasPermission('upload_pictures')
 
   return (
     <div className="space-y-6">
@@ -144,10 +161,13 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
             </h2>
             <p className="text-sm text-[var(--on-surface-muted)]">
               {displayPhotos.length} photos
+              {!selectedAlbum && featuredPhotos.length > 0 && (
+                <span className="ml-1 text-amber-500">· {featuredPhotos.length} featured</span>
+              )}
             </p>
           </div>
         </div>
-        {hasPermission('upload_pictures') && (
+        {canUpload && (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setNewAlbumOpen(true)}>
               <FolderOpen className="w-4 h-4" /> New album
@@ -163,11 +183,44 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
         <Tabs defaultValue="photos">
           <TabsList>
             <TabsTrigger value="photos"><Images className="w-3.5 h-3.5 mr-1.5" />All photos</TabsTrigger>
+            <TabsTrigger value="featured">
+              <Star className="w-3.5 h-3.5 mr-1.5" />
+              Featured
+              {featuredPhotos.length > 0 && (
+                <span className="ml-1.5 text-[10px] font-semibold bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-full px-1.5 py-0.5">
+                  {featuredPhotos.length}
+                </span>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="albums"><FolderOpen className="w-3.5 h-3.5 mr-1.5" />Albums</TabsTrigger>
           </TabsList>
 
           <TabsContent value="photos">
-            <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={hasPermission('delete_pictures') ? deletePhoto : undefined} />
+            <PhotoGrid
+              photos={displayPhotos}
+              onPhotoClick={setLightboxPhoto}
+              onDelete={canDelete ? deletePhoto : undefined}
+              onToggleFeatured={toggleFeatured}
+            />
+          </TabsContent>
+
+          <TabsContent value="featured">
+            {featuredPhotos.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="text-4xl mb-3">⭐</div>
+                <p className="text-sm text-[var(--on-surface-variant)]">No featured photos yet</p>
+                <p className="text-xs text-[var(--on-surface-muted)] mt-1">
+                  Star a photo to show it in the dashboard carousel
+                </p>
+              </div>
+            ) : (
+              <PhotoGrid
+                photos={featuredPhotos}
+                onPhotoClick={setLightboxPhoto}
+                onDelete={canDelete ? deletePhoto : undefined}
+                onToggleFeatured={toggleFeatured}
+              />
+            )}
           </TabsContent>
 
           <TabsContent value="albums">
@@ -206,7 +259,12 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
       )}
 
       {selectedAlbum && (
-        <PhotoGrid photos={displayPhotos} onPhotoClick={setLightboxPhoto} onDelete={hasPermission('delete_pictures') ? deletePhoto : undefined} />
+        <PhotoGrid
+          photos={displayPhotos}
+          onPhotoClick={setLightboxPhoto}
+          onDelete={canDelete ? deletePhoto : undefined}
+          onToggleFeatured={toggleFeatured}
+        />
       )}
 
       {/* New Album Dialog */}
@@ -275,14 +333,29 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
       {/* Lightbox */}
       <AnimatePresence>
         {lightboxPhoto && (
-          <LightboxOverlay photo={lightboxPhoto} onClose={() => setLightboxPhoto(null)} onDelete={hasPermission('delete_pictures') ? deletePhoto : undefined} />
+          <LightboxOverlay
+            photo={lightboxPhoto}
+            onClose={() => setLightboxPhoto(null)}
+            onDelete={canDelete ? deletePhoto : undefined}
+            onToggleFeatured={toggleFeatured}
+          />
         )}
       </AnimatePresence>
     </div>
   )
 }
 
-function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: () => void; onDelete?: (photo: Photo) => void }) {
+function LightboxOverlay({
+  photo,
+  onClose,
+  onDelete,
+  onToggleFeatured,
+}: {
+  photo: Photo
+  onClose: () => void
+  onDelete?: (photo: Photo) => void
+  onToggleFeatured: (photo: Photo) => void
+}) {
   const url = useSignedUrl(photo.storage_path)
   return (
     <motion.div
@@ -298,6 +371,18 @@ function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: 
       >
         <X className="w-6 h-6" />
       </button>
+
+      {/* Featured toggle */}
+      <button
+        className={`absolute top-4 right-14 p-2 transition-colors ${
+          photo.is_featured ? 'text-amber-400 hover:text-amber-300' : 'text-white/50 hover:text-amber-400'
+        }`}
+        onClick={(e) => { e.stopPropagation(); onToggleFeatured(photo) }}
+        title={photo.is_featured ? 'Remove from featured' : 'Add to featured'}
+      >
+        <Star className={`w-5 h-5 ${photo.is_featured ? 'fill-current' : ''}`} />
+      </button>
+
       {onDelete && (
         <button
           className="absolute top-4 left-4 text-white/60 hover:text-red-400 p-2 transition-colors"
@@ -322,11 +407,28 @@ function LightboxOverlay({ photo, onClose, onDelete }: { photo: Photo; onClose: 
       ) : (
         <Loader2 className="w-8 h-8 text-white animate-spin" />
       )}
+      {photo.caption && (
+        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-sm">
+          {photo.caption}
+        </p>
+      )}
     </motion.div>
   )
 }
 
-function PhotoCard({ photo, index, onClick, onDelete }: { photo: Photo; index: number; onClick: () => void; onDelete?: (p: Photo) => void }) {
+function PhotoCard({
+  photo,
+  index,
+  onClick,
+  onDelete,
+  onToggleFeatured,
+}: {
+  photo: Photo
+  index: number
+  onClick: () => void
+  onDelete?: (p: Photo) => void
+  onToggleFeatured: (p: Photo) => void
+}) {
   const url = useSignedUrl(photo.storage_path)
   return (
     <motion.div
@@ -350,21 +452,55 @@ function PhotoCard({ photo, index, onClick, onDelete }: { photo: Photo; index: n
           </div>
         )}
       </div>
-      {onDelete && <button
-        className="absolute top-1.5 right-1.5 w-7 h-7 rounded-full bg-black/40 hover:bg-red-500 flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-all z-10"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
-        }}
-        title="Delete photo"
-      >
-        <Trash2 className="w-3.5 h-3.5" />
-      </button>}
+
+      {/* Featured indicator */}
+      {photo.is_featured && (
+        <div className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bg-amber-400/90 flex items-center justify-center shadow-sm pointer-events-none">
+          <Star className="w-3.5 h-3.5 text-white fill-white" />
+        </div>
+      )}
+
+      {/* Action buttons (hover) */}
+      <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
+        <button
+          className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors ${
+            photo.is_featured
+              ? 'bg-amber-400/80 hover:bg-amber-400 text-white'
+              : 'bg-black/40 hover:bg-amber-400/80 text-white/80 hover:text-white'
+          }`}
+          onClick={(e) => { e.stopPropagation(); onToggleFeatured(photo) }}
+          title={photo.is_featured ? 'Remove from featured' : 'Feature this photo'}
+        >
+          <Star className={`w-3.5 h-3.5 ${photo.is_featured ? 'fill-current' : ''}`} />
+        </button>
+        {onDelete && (
+          <button
+            className="w-7 h-7 rounded-full bg-black/40 hover:bg-red-500 flex items-center justify-center text-white transition-all z-10"
+            onClick={(e) => {
+              e.stopPropagation()
+              if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
+            }}
+            title="Delete photo"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </button>
+        )}
+      </div>
     </motion.div>
   )
 }
 
-function PhotoGrid({ photos, onPhotoClick, onDelete }: { photos: Photo[]; onPhotoClick: (p: Photo) => void; onDelete?: (p: Photo) => void }) {
+function PhotoGrid({
+  photos,
+  onPhotoClick,
+  onDelete,
+  onToggleFeatured,
+}: {
+  photos: Photo[]
+  onPhotoClick: (p: Photo) => void
+  onDelete?: (p: Photo) => void
+  onToggleFeatured: (p: Photo) => void
+}) {
   if (photos.length === 0) {
     return (
       <div className="text-center py-16">
@@ -377,7 +513,14 @@ function PhotoGrid({ photos, onPhotoClick, onDelete }: { photos: Photo[]; onPhot
   return (
     <div className="columns-2 md:columns-3 gap-3 space-y-3 mt-4">
       {photos.map((photo, i) => (
-        <PhotoCard key={photo.id} photo={photo} index={i} onClick={() => onPhotoClick(photo)} onDelete={onDelete} />
+        <PhotoCard
+          key={photo.id}
+          photo={photo}
+          index={i}
+          onClick={() => onPhotoClick(photo)}
+          onDelete={onDelete}
+          onToggleFeatured={onToggleFeatured}
+        />
       ))}
     </div>
   )
