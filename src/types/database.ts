@@ -143,6 +143,7 @@ export interface Database {
           caption: string | null
           taken_at: string | null
           created_at: string
+          is_featured: boolean
         }
         Insert: {
           album_id: string
@@ -151,6 +152,7 @@ export interface Database {
           storage_path: string
           caption?: string | null
           taken_at?: string | null
+          is_featured?: boolean
         }
         Update: {
           album_id?: string
@@ -159,6 +161,7 @@ export interface Database {
           storage_path?: string
           caption?: string | null
           taken_at?: string | null
+          is_featured?: boolean
         }
         Relationships: [
           {

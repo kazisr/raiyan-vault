@@ -39,7 +39,7 @@ export default async function PublicDashboardPage() {
     { count: visitCount },
     { count: blogCount },
   ] = await Promise.all([
-    supabase.from('photos').select('id, storage_path, caption').order('created_at', { ascending: false }).limit(12),
+    supabase.from('photos').select('id, storage_path, caption').eq('is_featured', true).order('created_at', { ascending: false }),
     supabase.from('ledger_entries').select('id, amount, type, currency, category, description, entry_date, source_person').order('entry_date', { ascending: false }),
     supabase.from('vaccines').select('*').order('administered_date', { ascending: false }),
     supabase.from('events').select('*').order('event_date', { ascending: false }).limit(5),
