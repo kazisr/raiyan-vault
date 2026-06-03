@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
-import { LogIn, Camera, ZoomIn, X, Check } from 'lucide-react'
+import { Camera, ZoomIn, X, Check } from 'lucide-react'
 import { formatDate } from '@/utils/age'
+import { CHILD_BIO } from '@/constants/child'
 
 interface Photo {
   id: string
@@ -15,7 +15,6 @@ interface ProfileHeaderSectionProps {
   initialCoverUrl: string | null
   initialProfileUrl: string | null
   allPhotos: Photo[]
-  canEdit: boolean
   childName: string
   childDob: string
   childNickname: string
@@ -31,10 +30,7 @@ export function ProfileHeaderSection({
   initialCoverUrl,
   initialProfileUrl,
   allPhotos,
-  canEdit,
   childName,
-  childDob,
-  childNickname,
   photoCount,
   vaccineCount,
   visitCount,
@@ -44,8 +40,46 @@ export function ProfileHeaderSection({
   const [coverUrl, setCoverUrl] = useState(initialCoverUrl)
   const [lightbox, setLightbox] = useState<'profile' | 'cover' | null>(null)
   const [selector, setSelector] = useState<'profile' | 'cover' | null>(null)
+  const [canEdit, setCanEdit] = useState(false)
 
-  // Restore saved selections from localStorage
+  // Client-side auth + permission check (upload_pictures)
+  useEffect(() => {
+    async function checkAuth() {
+      try {
+        const { createClient } = await import('@/lib/supabase/client')
+        const supabase = createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: profile } = await (supabase as any)
+          .from('user_profiles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single()
+
+        if (!profile) return
+
+        if (profile.role === 'Dad') {
+          setCanEdit(true)
+          return
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const { data: perm } = await (supabase as any)
+          .from('role_permissions')
+          .select('granted')
+          .eq('role', profile.role)
+          .eq('permission', 'upload_pictures')
+          .single()
+
+        if (perm?.granted) setCanEdit(true)
+      } catch {}
+    }
+    checkAuth()
+  }, [])
+
+  // Restore saved photo selections from localStorage
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY)
@@ -96,7 +130,6 @@ export function ProfileHeaderSection({
           View Cover Photo
         </button>
 
-        {/* Edit cover — only for permitted users */}
         {canEdit && (
           <button
             onClick={() => setSelector('cover')}
@@ -131,7 +164,6 @@ export function ProfileHeaderSection({
                 </div>
               </div>
 
-              {/* Edit profile pic — only for permitted users */}
               {canEdit && (
                 <button
                   onClick={() => setSelector('profile')}
@@ -143,15 +175,13 @@ export function ProfileHeaderSection({
               )}
             </div>
 
-            {/* Name + stats + action */}
+            {/* Name + stats (no login button here — it's in the navbar) */}
             <div className="flex-1 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:pb-2">
               <div>
                 <h1 className="text-2xl sm:text-[28px] font-bold text-[#050505] dark:text-[#E4E6EB] leading-tight">
                   {childName}
                 </h1>
-                <p className="text-[#65676B] dark:text-[#B0B3B8] text-sm mt-0.5">
-                  Born {formatDate(childDob, 'MMMM D, YYYY')}
-                </p>
+                <p className="text-[#65676B] dark:text-[#B0B3B8] text-sm mt-0.5">{CHILD_BIO}</p>
                 <div className="flex flex-wrap items-center gap-x-1 mt-2">
                   <StatPill value={photoCount} label="Photos" />
                   <Dot />
@@ -162,13 +192,6 @@ export function ProfileHeaderSection({
                   <StatPill value={postCount} label="Posts" />
                 </div>
               </div>
-              <Link
-                href="/login"
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1877F2] text-white text-sm font-semibold hover:bg-[#166fe5] transition-colors self-start sm:self-auto"
-              >
-                <LogIn className="w-4 h-4" />
-                Login to Vault
-              </Link>
             </div>
           </div>
         </div>

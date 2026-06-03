@@ -1,6 +1,7 @@
 export const CHILD_NAME = 'Kazi Ahmed Raiyan'
 export const CHILD_DOB = '2026-05-17T17:15:00+06:00'
 export const CHILD_NICKNAME = 'Raiyan'
+export const CHILD_BIO = 'I am Groot'
 
 export const BLOOD_GROUPS = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'] as const
 

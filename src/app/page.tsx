@@ -1,27 +1,10 @@
-import type { ReactNode } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import { createClient as createAuthClient } from '@/lib/supabase/server'
-import {
-  Heart,
-  Camera,
-  Syringe,
-  Stethoscope,
-  BookOpen,
-  Calendar,
-  MapPin,
-} from 'lucide-react'
-import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME, EVENT_TYPES } from '@/constants/child'
-import { AgeCounter } from '@/components/dashboard/age-counter'
-import { VaccineReminder } from '@/components/dashboard/vaccine-reminder'
-import PhotoCarousel from '@/components/baby/PhotoCarousel'
-import { BalanceSection } from '@/components/baby/BalanceSection'
-import { LedgerHistory } from '@/components/baby/LedgerHistory'
+import { Heart, LogIn } from 'lucide-react'
+import Link from 'next/link'
+import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME } from '@/constants/child'
 import { ThemeToggle } from '@/components/baby/ThemeToggle'
 import { ProfileHeaderSection } from '@/components/baby/ProfileHeaderSection'
-import { ShareButton } from '@/components/baby/ShareButton'
-import { formatDate } from '@/utils/age'
-import Link from 'next/link'
-import { LogIn } from 'lucide-react'
+import { ProfileContent } from '@/components/baby/ProfileContent'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -41,31 +24,6 @@ function createPublicClient() {
 
 export default async function PublicDashboardPage() {
   const supabase = createPublicClient()
-
-  // Check if the current visitor is logged in and has upload_pictures permission
-  let canEditPhotos = false
-  try {
-    const authClient = await createAuthClient()
-    const { data: { user } } = await authClient.auth.getUser()
-    if (user) {
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('role')
-        .eq('user_id', user.id)
-        .single()
-      if (profile?.role === 'Dad') {
-        canEditPhotos = true
-      } else if (profile) {
-        const { data: perm } = await supabase
-          .from('role_permissions')
-          .select('granted')
-          .eq('role', profile.role)
-          .eq('permission', 'upload_pictures')
-          .single()
-        canEditPhotos = perm?.granted === true
-      }
-    }
-  } catch {}
 
   const [
     { data: photos },
@@ -144,12 +102,11 @@ export default async function PublicDashboardPage() {
 
       <div className="max-w-[1280px] mx-auto">
 
-        {/* ── Cover + Profile Info (client component handles lightbox & selector) ── */}
+        {/* Cover + Profile Info — client component (lightbox, photo selector, auth check) */}
         <ProfileHeaderSection
           initialCoverUrl={carouselPhotos[0]?.url ?? null}
           initialProfileUrl={carouselPhotos[0]?.url ?? null}
           allPhotos={carouselPhotos}
-          canEdit={canEditPhotos}
           childName={CHILD_NAME}
           childDob={CHILD_DOB}
           childNickname={CHILD_NICKNAME}
@@ -159,214 +116,20 @@ export default async function PublicDashboardPage() {
           postCount={totalPosts}
         />
 
-        {/* ── Tab Navigation — All · Photos · Reels ── */}
-        <div className="bg-white dark:bg-[#242526] border-b border-[#E4E6EB] dark:border-[#3A3B3C] sticky top-14 z-40 shadow-sm">
-          <div className="max-w-[940px] mx-auto px-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <div className="flex">
-              {(['All', 'Photos', 'Reels'] as const).map((tab) => (
-                <button
-                  key={tab}
-                  className={[
-                    'px-5 py-3 text-[15px] font-semibold whitespace-nowrap border-b-[3px] transition-colors mr-1',
-                    tab === 'All'
-                      ? 'border-[#1877F2] text-[#1877F2]'
-                      : 'border-transparent text-[#65676B] dark:text-[#B0B3B8] hover:bg-[#F0F2F5] dark:hover:bg-[#3A3B3C] rounded-t-md',
-                  ].join(' ')}
-                >
-                  {tab}
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* ── Main Two-Column Layout ── */}
-        <div className="max-w-[940px] mx-auto px-4 py-4">
-          <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-4 items-start">
-
-            {/* ── LEFT SIDEBAR ── */}
-            <div className="space-y-3">
-
-              {/* Intro Card */}
-              <div className="bg-white dark:bg-[#242526] rounded-xl p-4 shadow-sm border border-[#E4E6EB] dark:border-[#3A3B3C]">
-                <h2 className="text-xl font-bold text-[#050505] dark:text-[#E4E6EB] mb-4">Intro</h2>
-                <div className="space-y-3">
-                  {[
-                    { Icon: Calendar, text: `Born on ${formatDate(CHILD_DOB, 'MMMM D, YYYY')}` },
-                    { Icon: MapPin, text: 'Dhaka, Bangladesh' },
-                    { Icon: Heart, text: 'Cherished by family', iconClass: 'text-rose-500' },
-                    { Icon: Camera, text: `${photoCount} featured photo${photoCount !== 1 ? 's' : ''}` },
-                    { Icon: Syringe, text: `${vaccineCount} vaccine${vaccineCount !== 1 ? 's' : ''} administered` },
-                    { Icon: Stethoscope, text: `${totalVisits} doctor visit${totalVisits !== 1 ? 's' : ''}` },
-                    { Icon: BookOpen, text: `${totalPosts} blog post${totalPosts !== 1 ? 's' : ''}` },
-                  ].map(({ Icon, text, iconClass }) => (
-                    <div key={text} className="flex items-center gap-3">
-                      <Icon
-                        className={`w-[18px] h-[18px] flex-shrink-0 text-[#65676B] dark:text-[#B0B3B8] ${iconClass ?? ''}`}
-                      />
-                      <span className="text-sm text-[#050505] dark:text-[#E4E6EB]">{text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Photos Grid Card */}
-              {carouselPhotos.length > 0 && (
-                <div className="bg-white dark:bg-[#242526] rounded-xl p-4 shadow-sm border border-[#E4E6EB] dark:border-[#3A3B3C]">
-                  <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-xl font-bold text-[#050505] dark:text-[#E4E6EB]">Photos</h2>
-                    <span className="text-sm font-semibold text-[#1877F2]">{photoCount} total</span>
-                  </div>
-                  <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
-                    {carouselPhotos.slice(0, 9).map((p, i) => (
-                      <div
-                        key={p.id}
-                        className="aspect-square overflow-hidden bg-[#F0F2F5] dark:bg-[#3A3B3C]"
-                      >
-                        <img
-                          src={p.url}
-                          alt={p.caption ?? `Photo ${i + 1}`}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Vaccine Reminders */}
-              <VaccineReminder vaccines={vaccines ?? []} readOnly />
-            </div>
-
-            {/* ── RIGHT FEED ── */}
-            <div className="space-y-3">
-
-              {/* Age Counter — standalone, no FeedCard wrapper */}
-              <AgeCounter />
-
-              {/* Featured Photos */}
-              {carouselPhotos.length > 0 && (
-                <FeedCard
-                  profilePhotoUrl={carouselPhotos[0]?.url ?? null}
-                  title={CHILD_NICKNAME}
-                  subtitle="added new photos"
-                >
-                  <PhotoCarousel photos={carouselPhotos} />
-                </FeedCard>
-              )}
-
-              {/* Recent Memories */}
-              {(events ?? []).length > 0 && (
-                <FeedCard
-                  profilePhotoUrl={carouselPhotos[0]?.url ?? null}
-                  title={CHILD_NICKNAME}
-                  subtitle="Recent Memories"
-                >
-                  <div className="px-4 pb-4 space-y-3">
-                    {(events ?? []).slice(0, 4).map((event) => {
-                      const typeInfo = EVENT_TYPES.find((t) => t.value === event.event_type)
-                      return (
-                        <div key={event.id} className="flex items-start gap-3">
-                          <div className="w-9 h-9 rounded-full bg-[#F0F2F5] dark:bg-[#3A3B3C] flex items-center justify-center flex-shrink-0 text-lg select-none">
-                            {typeInfo?.emoji ?? '📝'}
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="text-sm font-semibold text-[#050505] dark:text-[#E4E6EB] truncate">
-                              {event.title}
-                            </p>
-                            <p className="text-xs text-[#65676B] dark:text-[#B0B3B8]">
-                              {formatDate(event.event_date)}
-                            </p>
-                          </div>
-                          {event.tags.length > 0 && (
-                            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-[#E7F3FF] dark:bg-[#263951] text-[#1877F2] flex-shrink-0">
-                              {event.tags[0]}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </FeedCard>
-              )}
-
-              {/* Family Fund */}
-              <FeedCard
-                profilePhotoUrl={carouselPhotos[0]?.url ?? null}
-                title={CHILD_NICKNAME}
-                subtitle="Family Fund"
-              >
-                <div className="px-4 pb-4">
-                  <BalanceSection balances={balances} />
-                </div>
-              </FeedCard>
-
-              {/* Ledger History */}
-              {(ledgerEntries ?? []).length > 0 && (
-                <FeedCard
-                  profilePhotoUrl={carouselPhotos[0]?.url ?? null}
-                  title={CHILD_NICKNAME}
-                  subtitle="Ledger History"
-                >
-                  <div className="px-4 pb-4">
-                    <LedgerHistory entries={ledgerEntries ?? []} />
-                  </div>
-                </FeedCard>
-              )}
-            </div>
-          </div>
-        </div>
-
-        <footer className="max-w-[940px] mx-auto px-4 pb-8 mt-2 text-center">
-          <p className="text-xs text-[#65676B] dark:text-[#B0B3B8]">
-            For {CHILD_NICKNAME} with love ❤️
-          </p>
-        </footer>
-      </div>
-    </div>
-  )
-}
-
-// ── FeedCard — post wrapper with Share-only reactions ─────────────────
-
-function FeedCard({
-  profilePhotoUrl,
-  title,
-  subtitle,
-  children,
-}: {
-  profilePhotoUrl: string | null
-  title: string
-  subtitle: string
-  children: ReactNode
-}) {
-  return (
-    <div className="bg-white dark:bg-[#242526] rounded-xl shadow-sm border border-[#E4E6EB] dark:border-[#3A3B3C] overflow-hidden">
-      {/* Post header */}
-      <div className="p-4 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-full bg-[#1877F2] overflow-hidden flex-shrink-0">
-          {profilePhotoUrl ? (
-            <img src={profilePhotoUrl} alt={title} className="w-full h-full object-cover" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-lg select-none">
-              👶
-            </div>
-          )}
-        </div>
-        <div>
-          <p className="text-[15px] font-semibold text-[#050505] dark:text-[#E4E6EB] leading-tight">
-            {title}
-          </p>
-          <p className="text-xs text-[#65676B] dark:text-[#B0B3B8]">{subtitle}</p>
-        </div>
-      </div>
-
-      {/* Post body */}
-      {children}
-
-      {/* Share-only reactions bar */}
-      <div className="px-4 py-2 border-t border-[#E4E6EB] dark:border-[#3A3B3C] flex items-center">
-        <ShareButton />
+        {/* Tabs + Feed — client component (All / Photos / Reels) */}
+        <ProfileContent
+          carouselPhotos={carouselPhotos}
+          vaccines={vaccines ?? []}
+          events={events ?? []}
+          balances={balances}
+          ledgerEntries={ledgerEntries ?? []}
+          childName={CHILD_NAME}
+          childNickname={CHILD_NICKNAME}
+          photoCount={photoCount}
+          vaccineCount={vaccineCount}
+          visitCount={totalVisits}
+          postCount={totalPosts}
+        />
       </div>
     </div>
   )

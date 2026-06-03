@@ -3,20 +3,27 @@
 import { useState } from 'react'
 import { Share2, Check } from 'lucide-react'
 
-export function ShareButton() {
+interface ShareButtonProps {
+  url?: string
+  title?: string
+}
+
+export function ShareButton({ url, title }: ShareButtonProps) {
   const [copied, setCopied] = useState(false)
 
   const handleShare = async () => {
-    const url = typeof window !== 'undefined' ? window.location.href : ''
-    const title = typeof document !== 'undefined' ? document.title : ''
+    const shareUrl =
+      url ?? (typeof window !== 'undefined' ? window.location.href : '')
+    const shareTitle =
+      title ?? (typeof document !== 'undefined' ? document.title : '')
 
     if (navigator.share) {
       try {
-        await navigator.share({ url, title })
+        await navigator.share({ url: shareUrl, title: shareTitle })
       } catch {}
     } else {
       try {
-        await navigator.clipboard.writeText(url)
+        await navigator.clipboard.writeText(shareUrl)
         setCopied(true)
         setTimeout(() => setCopied(false), 2000)
       } catch {}
