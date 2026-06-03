@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react'
 import { createClient } from '@supabase/supabase-js'
-import Link from 'next/link'
+import { createClient as createAuthClient } from '@/lib/supabase/server'
 import {
-  LogIn,
   Heart,
   Camera,
   Syringe,
@@ -18,7 +17,11 @@ import PhotoCarousel from '@/components/baby/PhotoCarousel'
 import { BalanceSection } from '@/components/baby/BalanceSection'
 import { LedgerHistory } from '@/components/baby/LedgerHistory'
 import { ThemeToggle } from '@/components/baby/ThemeToggle'
+import { ProfileHeaderSection } from '@/components/baby/ProfileHeaderSection'
+import { ShareButton } from '@/components/baby/ShareButton'
 import { formatDate } from '@/utils/age'
+import Link from 'next/link'
+import { LogIn } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -38,6 +41,31 @@ function createPublicClient() {
 
 export default async function PublicDashboardPage() {
   const supabase = createPublicClient()
+
+  // Check if the current visitor is logged in and has upload_pictures permission
+  let canEditPhotos = false
+  try {
+    const authClient = await createAuthClient()
+    const { data: { user } } = await authClient.auth.getUser()
+    if (user) {
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('role')
+        .eq('user_id', user.id)
+        .single()
+      if (profile?.role === 'Dad') {
+        canEditPhotos = true
+      } else if (profile) {
+        const { data: perm } = await supabase
+          .from('role_permissions')
+          .select('granted')
+          .eq('role', profile.role)
+          .eq('permission', 'upload_pictures')
+          .single()
+        canEditPhotos = perm?.granted === true
+      }
+    }
+  } catch {}
 
   const [
     { data: photos },
@@ -82,7 +110,6 @@ export default async function PublicDashboardPage() {
     return { currency, balance: income - expense }
   })
 
-  const profilePhotoUrl = carouselPhotos[0]?.url ?? null
   const photoCount = carouselPhotos.length
   const vaccineCount = (vaccines ?? []).length
   const totalVisits = visitCount ?? 0
@@ -91,7 +118,7 @@ export default async function PublicDashboardPage() {
   return (
     <div className="min-h-screen bg-[#F0F2F5] dark:bg-[#18191A]">
 
-      {/* ── Facebook-style Navbar ── */}
+      {/* ── Navbar ── */}
       <nav className="sticky top-0 z-50 bg-[#1877F2] h-14 shadow-md">
         <div className="max-w-[1280px] mx-auto h-full flex items-center justify-between px-4">
           <div className="flex items-center gap-2.5">
@@ -117,82 +144,31 @@ export default async function PublicDashboardPage() {
 
       <div className="max-w-[1280px] mx-auto">
 
-        {/* ── Cover Photo ── */}
-        <div className="relative h-[220px] sm:h-[340px] bg-gradient-to-br from-[#1877F2] via-[#4facfe] to-[#00c6fb] overflow-hidden rounded-b-2xl">
-          {carouselPhotos[0] && (
-            <img
-              src={carouselPhotos[0].url}
-              alt="Cover"
-              className="w-full h-full object-cover"
-            />
-          )}
-          <div className="absolute inset-x-0 bottom-0 h-28 bg-gradient-to-t from-black/30 to-transparent pointer-events-none" />
-        </div>
+        {/* ── Cover + Profile Info (client component handles lightbox & selector) ── */}
+        <ProfileHeaderSection
+          initialCoverUrl={carouselPhotos[0]?.url ?? null}
+          initialProfileUrl={carouselPhotos[0]?.url ?? null}
+          allPhotos={carouselPhotos}
+          canEdit={canEditPhotos}
+          childName={CHILD_NAME}
+          childDob={CHILD_DOB}
+          childNickname={CHILD_NICKNAME}
+          photoCount={photoCount}
+          vaccineCount={vaccineCount}
+          visitCount={totalVisits}
+          postCount={totalPosts}
+        />
 
-        {/* ── Profile Info Bar ── */}
-        <div className="bg-white dark:bg-[#242526] shadow-sm border-b border-[#E4E6EB] dark:border-[#3A3B3C]">
-          <div className="max-w-[940px] mx-auto px-4">
-            <div className="flex flex-col sm:flex-row sm:items-end gap-3 pb-4">
-
-              {/* Profile Picture */}
-              <div className="-mt-[54px] sm:-mt-[72px] flex-shrink-0 z-10">
-                <div className="w-[120px] h-[120px] sm:w-[168px] sm:h-[168px] rounded-full border-4 border-white dark:border-[#242526] bg-[#1877F2] overflow-hidden shadow-md">
-                  {profilePhotoUrl ? (
-                    <img
-                      src={profilePhotoUrl}
-                      alt={CHILD_NAME}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-5xl select-none">
-                      👶
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Name + Stats + Action */}
-              <div className="flex-1 flex flex-col sm:flex-row sm:items-end justify-between gap-3 sm:pb-2">
-                <div>
-                  <h1 className="text-2xl sm:text-[28px] font-bold text-[#050505] dark:text-[#E4E6EB] leading-tight">
-                    {CHILD_NAME}
-                  </h1>
-                  <p className="text-[#65676B] dark:text-[#B0B3B8] text-sm mt-0.5">
-                    Born {formatDate(CHILD_DOB, 'MMMM D, YYYY')}
-                  </p>
-                  {/* Stats row — Facebook friend-count style */}
-                  <div className="flex flex-wrap items-center gap-x-1 mt-2">
-                    <StatPill value={photoCount} label="Photos" />
-                    <Dot />
-                    <StatPill value={vaccineCount} label="Vaccines" />
-                    <Dot />
-                    <StatPill value={totalVisits} label="Dr. Visits" />
-                    <Dot />
-                    <StatPill value={totalPosts} label="Posts" />
-                  </div>
-                </div>
-                <Link
-                  href="/login"
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-md bg-[#1877F2] text-white text-sm font-semibold hover:bg-[#166fe5] transition-colors self-start sm:self-auto"
-                >
-                  <LogIn className="w-4 h-4" />
-                  Login to Vault
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* ── Tab Navigation ── */}
+        {/* ── Tab Navigation — All · Photos · Reels ── */}
         <div className="bg-white dark:bg-[#242526] border-b border-[#E4E6EB] dark:border-[#3A3B3C] sticky top-14 z-40 shadow-sm">
           <div className="max-w-[940px] mx-auto px-4 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             <div className="flex">
-              {(['Posts', 'About', 'Photos', 'Medical'] as const).map((tab) => (
+              {(['All', 'Photos', 'Reels'] as const).map((tab) => (
                 <button
                   key={tab}
                   className={[
-                    'px-4 py-3 text-sm font-semibold whitespace-nowrap border-b-[3px] transition-colors mr-1',
-                    tab === 'Posts'
+                    'px-5 py-3 text-[15px] font-semibold whitespace-nowrap border-b-[3px] transition-colors mr-1',
+                    tab === 'All'
                       ? 'border-[#1877F2] text-[#1877F2]'
                       : 'border-transparent text-[#65676B] dark:text-[#B0B3B8] hover:bg-[#F0F2F5] dark:hover:bg-[#3A3B3C] rounded-t-md',
                   ].join(' ')}
@@ -216,32 +192,13 @@ export default async function PublicDashboardPage() {
                 <h2 className="text-xl font-bold text-[#050505] dark:text-[#E4E6EB] mb-4">Intro</h2>
                 <div className="space-y-3">
                   {[
-                    {
-                      Icon: Calendar,
-                      text: `Born on ${formatDate(CHILD_DOB, 'MMMM D, YYYY')}`,
-                    },
+                    { Icon: Calendar, text: `Born on ${formatDate(CHILD_DOB, 'MMMM D, YYYY')}` },
                     { Icon: MapPin, text: 'Dhaka, Bangladesh' },
-                    {
-                      Icon: Heart,
-                      text: 'Cherished by family',
-                      iconClass: 'text-rose-500',
-                    },
-                    {
-                      Icon: Camera,
-                      text: `${photoCount} featured photo${photoCount !== 1 ? 's' : ''}`,
-                    },
-                    {
-                      Icon: Syringe,
-                      text: `${vaccineCount} vaccine${vaccineCount !== 1 ? 's' : ''} administered`,
-                    },
-                    {
-                      Icon: Stethoscope,
-                      text: `${totalVisits} doctor visit${totalVisits !== 1 ? 's' : ''}`,
-                    },
-                    {
-                      Icon: BookOpen,
-                      text: `${totalPosts} blog post${totalPosts !== 1 ? 's' : ''}`,
-                    },
+                    { Icon: Heart, text: 'Cherished by family', iconClass: 'text-rose-500' },
+                    { Icon: Camera, text: `${photoCount} featured photo${photoCount !== 1 ? 's' : ''}` },
+                    { Icon: Syringe, text: `${vaccineCount} vaccine${vaccineCount !== 1 ? 's' : ''} administered` },
+                    { Icon: Stethoscope, text: `${totalVisits} doctor visit${totalVisits !== 1 ? 's' : ''}` },
+                    { Icon: BookOpen, text: `${totalPosts} blog post${totalPosts !== 1 ? 's' : ''}` },
                   ].map(({ Icon, text, iconClass }) => (
                     <div key={text} className="flex items-center gap-3">
                       <Icon
@@ -257,12 +214,8 @@ export default async function PublicDashboardPage() {
               {carouselPhotos.length > 0 && (
                 <div className="bg-white dark:bg-[#242526] rounded-xl p-4 shadow-sm border border-[#E4E6EB] dark:border-[#3A3B3C]">
                   <div className="flex items-center justify-between mb-3">
-                    <h2 className="text-xl font-bold text-[#050505] dark:text-[#E4E6EB]">
-                      Photos
-                    </h2>
-                    <span className="text-sm font-semibold text-[#1877F2]">
-                      {photoCount} total
-                    </span>
+                    <h2 className="text-xl font-bold text-[#050505] dark:text-[#E4E6EB]">Photos</h2>
+                    <span className="text-sm font-semibold text-[#1877F2]">{photoCount} total</span>
                   </div>
                   <div className="grid grid-cols-3 gap-1 rounded-lg overflow-hidden">
                     {carouselPhotos.slice(0, 9).map((p, i) => (
@@ -288,19 +241,13 @@ export default async function PublicDashboardPage() {
             {/* ── RIGHT FEED ── */}
             <div className="space-y-3">
 
-              {/* Age Counter — pinned post */}
-              <FeedCard
-                profilePhotoUrl={profilePhotoUrl}
-                title={CHILD_NICKNAME}
-                subtitle="Age Update"
-              >
-                <AgeCounter />
-              </FeedCard>
+              {/* Age Counter — standalone, no FeedCard wrapper */}
+              <AgeCounter />
 
               {/* Featured Photos */}
               {carouselPhotos.length > 0 && (
                 <FeedCard
-                  profilePhotoUrl={profilePhotoUrl}
+                  profilePhotoUrl={carouselPhotos[0]?.url ?? null}
                   title={CHILD_NICKNAME}
                   subtitle="added new photos"
                 >
@@ -311,7 +258,7 @@ export default async function PublicDashboardPage() {
               {/* Recent Memories */}
               {(events ?? []).length > 0 && (
                 <FeedCard
-                  profilePhotoUrl={profilePhotoUrl}
+                  profilePhotoUrl={carouselPhotos[0]?.url ?? null}
                   title={CHILD_NICKNAME}
                   subtitle="Recent Memories"
                 >
@@ -345,7 +292,7 @@ export default async function PublicDashboardPage() {
 
               {/* Family Fund */}
               <FeedCard
-                profilePhotoUrl={profilePhotoUrl}
+                profilePhotoUrl={carouselPhotos[0]?.url ?? null}
                 title={CHILD_NICKNAME}
                 subtitle="Family Fund"
               >
@@ -357,7 +304,7 @@ export default async function PublicDashboardPage() {
               {/* Ledger History */}
               {(ledgerEntries ?? []).length > 0 && (
                 <FeedCard
-                  profilePhotoUrl={profilePhotoUrl}
+                  profilePhotoUrl={carouselPhotos[0]?.url ?? null}
                   title={CHILD_NICKNAME}
                   subtitle="Ledger History"
                 >
@@ -380,20 +327,7 @@ export default async function PublicDashboardPage() {
   )
 }
 
-// ── Shared helpers ────────────────────────────────────────────────────
-
-function StatPill({ value, label }: { value: number; label: string }) {
-  return (
-    <span className="text-sm">
-      <span className="font-bold text-[#050505] dark:text-[#E4E6EB]">{value}</span>
-      <span className="text-[#65676B] dark:text-[#B0B3B8] ml-1">{label}</span>
-    </span>
-  )
-}
-
-function Dot() {
-  return <span className="text-[#65676B] dark:text-[#B0B3B8] mx-0.5 text-xs">·</span>
-}
+// ── FeedCard — post wrapper with Share-only reactions ─────────────────
 
 function FeedCard({
   profilePhotoUrl,
@@ -430,16 +364,9 @@ function FeedCard({
       {/* Post body */}
       {children}
 
-      {/* Reactions bar */}
-      <div className="px-4 py-2 border-t border-[#E4E6EB] dark:border-[#3A3B3C] flex items-center gap-1">
-        {(['👍 Like', '💬 Comment', '↗️ Share'] as const).map((action) => (
-          <button
-            key={action}
-            className="flex items-center gap-1 text-sm font-semibold text-[#65676B] dark:text-[#B0B3B8] hover:bg-[#F0F2F5] dark:hover:bg-[#3A3B3C] px-3 py-1.5 rounded-md transition-colors"
-          >
-            {action}
-          </button>
-        ))}
+      {/* Share-only reactions bar */}
+      <div className="px-4 py-2 border-t border-[#E4E6EB] dark:border-[#3A3B3C] flex items-center">
+        <ShareButton />
       </div>
     </div>
   )
