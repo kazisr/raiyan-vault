@@ -12,6 +12,7 @@ import { formatDate } from '@/utils/age'
 import { EVENT_TYPES, CHILD_DOB } from '@/constants/child'
 import type { Event } from '@/types/events'
 import type { Vaccine } from '@/types/medical'
+import type { Currency } from '@/types/ledger'
 
 type Tab = 'All' | 'Photos' | 'Reels'
 
@@ -30,7 +31,7 @@ interface LedgerEntry {
   id: string
   amount: number
   type: string
-  currency: string
+  currency: Currency
   category: string
   description: string | null
   entry_date: string
