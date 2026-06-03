@@ -3,7 +3,7 @@
 import React, { useState, useCallback, useEffect } from 'react'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Upload, FolderOpen, Images, X, ChevronLeft, Loader2, ImageIcon, Trash2, Star } from 'lucide-react'
+import { Upload, FolderOpen, Images, X, ChevronLeft, Loader2, ImageIcon, Trash2, Star, User, LayoutDashboard } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -17,6 +17,7 @@ import { toast } from '@/hooks/use-toast'
 import { usePermissions } from '@/hooks/use-permissions'
 
 const BUCKET = 'photos'
+const PREFS_KEY = 'raiyan-photo-prefs'
 
 function useSignedUrl(storagePath: string | null) {
   const [url, setUrl] = useState<string | null>(null)
@@ -46,9 +47,17 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   const [albumName, setAlbumName] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadFiles, setUploadFiles] = useState<File[]>([])
+  const [photoPrefs, setPhotoPrefs] = useState<{ profileId?: string; coverId?: string }>({})
 
   const supabase = createClient()
   const { hasPermission } = usePermissions()
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(PREFS_KEY)
+      if (saved) setPhotoPrefs(JSON.parse(saved))
+    } catch {}
+  }, [])
 
   const onDrop = useCallback((accepted: File[]) => {
     setUploadFiles(accepted)
@@ -136,6 +145,22 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
     toast.success(newVal ? 'Added to featured' : 'Removed from featured')
   }
 
+  async function setAsProfilePhoto(photo: Photo) {
+    const updated = { ...photoPrefs, profileId: photo.id }
+    setPhotoPrefs(updated)
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(updated)) } catch {}
+    if (!photo.is_featured) await toggleFeatured(photo)
+    toast.success('Set as profile photo')
+  }
+
+  async function setAsCoverPhoto(photo: Photo) {
+    const updated = { ...photoPrefs, coverId: photo.id }
+    setPhotoPrefs(updated)
+    try { localStorage.setItem(PREFS_KEY, JSON.stringify(updated)) } catch {}
+    if (!photo.is_featured) await toggleFeatured(photo)
+    toast.success('Set as cover photo')
+  }
+
   const displayPhotos = selectedAlbum
     ? photos.filter((p) => p.album_id === selectedAlbum.id)
     : photos
@@ -201,6 +226,10 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
               onPhotoClick={setLightboxPhoto}
               onDelete={canDelete ? deletePhoto : undefined}
               onToggleFeatured={toggleFeatured}
+              onSetProfile={canUpload ? setAsProfilePhoto : undefined}
+              onSetCover={canUpload ? setAsCoverPhoto : undefined}
+              profileId={photoPrefs.profileId}
+              coverId={photoPrefs.coverId}
             />
           </TabsContent>
 
@@ -219,6 +248,10 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
                 onPhotoClick={setLightboxPhoto}
                 onDelete={canDelete ? deletePhoto : undefined}
                 onToggleFeatured={toggleFeatured}
+                onSetProfile={canUpload ? setAsProfilePhoto : undefined}
+                onSetCover={canUpload ? setAsCoverPhoto : undefined}
+                profileId={photoPrefs.profileId}
+                coverId={photoPrefs.coverId}
               />
             )}
           </TabsContent>
@@ -264,6 +297,10 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
           onPhotoClick={setLightboxPhoto}
           onDelete={canDelete ? deletePhoto : undefined}
           onToggleFeatured={toggleFeatured}
+          onSetProfile={canUpload ? setAsProfilePhoto : undefined}
+          onSetCover={canUpload ? setAsCoverPhoto : undefined}
+          profileId={photoPrefs.profileId}
+          coverId={photoPrefs.coverId}
         />
       )}
 
@@ -338,6 +375,10 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
             onClose={() => setLightboxPhoto(null)}
             onDelete={canDelete ? deletePhoto : undefined}
             onToggleFeatured={toggleFeatured}
+            onSetProfile={canUpload ? setAsProfilePhoto : undefined}
+            onSetCover={canUpload ? setAsCoverPhoto : undefined}
+            isProfile={photoPrefs.profileId === lightboxPhoto.id}
+            isCover={photoPrefs.coverId === lightboxPhoto.id}
           />
         )}
       </AnimatePresence>
@@ -350,11 +391,19 @@ function LightboxOverlay({
   onClose,
   onDelete,
   onToggleFeatured,
+  onSetProfile,
+  onSetCover,
+  isProfile,
+  isCover,
 }: {
   photo: Photo
   onClose: () => void
   onDelete?: (photo: Photo) => void
   onToggleFeatured: (photo: Photo) => void
+  onSetProfile?: (photo: Photo) => void
+  onSetCover?: (photo: Photo) => void
+  isProfile?: boolean
+  isCover?: boolean
 }) {
   const url = useSignedUrl(photo.storage_path)
   return (
@@ -395,6 +444,7 @@ function LightboxOverlay({
           <Trash2 className="w-5 h-5" />
         </button>
       )}
+
       {url ? (
         <motion.img
           initial={{ scale: 0.9 }}
@@ -407,6 +457,42 @@ function LightboxOverlay({
       ) : (
         <Loader2 className="w-8 h-8 text-white animate-spin" />
       )}
+
+      {/* Set as profile / cover buttons */}
+      {(onSetProfile || onSetCover) && (
+        <div
+          className="absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {onSetProfile && (
+            <button
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
+                isProfile
+                  ? 'bg-[#1877F2] text-white border-[#1877F2]'
+                  : 'bg-black/40 hover:bg-[#1877F2]/80 text-white/80 hover:text-white border-white/20'
+              }`}
+              onClick={() => onSetProfile(photo)}
+            >
+              <User className="w-3.5 h-3.5" />
+              {isProfile ? '✓ Profile Photo' : 'Set as Profile'}
+            </button>
+          )}
+          {onSetCover && (
+            <button
+              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
+                isCover
+                  ? 'bg-emerald-500 text-white border-emerald-500'
+                  : 'bg-black/40 hover:bg-emerald-500/80 text-white/80 hover:text-white border-white/20'
+              }`}
+              onClick={() => onSetCover(photo)}
+            >
+              <LayoutDashboard className="w-3.5 h-3.5" />
+              {isCover ? '✓ Cover Photo' : 'Set as Cover'}
+            </button>
+          )}
+        </div>
+      )}
+
       {photo.caption && (
         <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-sm">
           {photo.caption}
@@ -422,12 +508,20 @@ function PhotoCard({
   onClick,
   onDelete,
   onToggleFeatured,
+  onSetProfile,
+  onSetCover,
+  isProfile,
+  isCover,
 }: {
   photo: Photo
   index: number
   onClick: () => void
   onDelete?: (p: Photo) => void
   onToggleFeatured: (p: Photo) => void
+  onSetProfile?: (p: Photo) => void
+  onSetCover?: (p: Photo) => void
+  isProfile?: boolean
+  isCover?: boolean
 }) {
   const url = useSignedUrl(photo.storage_path)
   return (
@@ -453,14 +547,22 @@ function PhotoCard({
         )}
       </div>
 
-      {/* Featured indicator */}
-      {photo.is_featured && (
-        <div className="absolute top-1.5 left-1.5 w-6 h-6 rounded-full bg-amber-400/90 flex items-center justify-center shadow-sm pointer-events-none">
-          <Star className="w-3.5 h-3.5 text-white fill-white" />
-        </div>
-      )}
+      {/* Top-left indicators */}
+      <div className="absolute top-1.5 left-1.5 flex gap-1 pointer-events-none">
+        {photo.is_featured && (
+          <div className="w-6 h-6 rounded-full bg-amber-400/90 flex items-center justify-center shadow-sm">
+            <Star className="w-3.5 h-3.5 text-white fill-white" />
+          </div>
+        )}
+        {isProfile && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-[#1877F2] text-white shadow-sm leading-tight">P</span>
+        )}
+        {isCover && (
+          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-emerald-500 text-white shadow-sm leading-tight">C</span>
+        )}
+      </div>
 
-      {/* Action buttons (hover) */}
+      {/* Top-right action buttons (hover) */}
       <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover:opacity-100 transition-all">
         <button
           className={`w-7 h-7 rounded-full backdrop-blur-sm flex items-center justify-center transition-colors ${
@@ -486,6 +588,38 @@ function PhotoCard({
           </button>
         )}
       </div>
+
+      {/* Bottom slide-up bar: Profile / Cover */}
+      {(onSetProfile || onSetCover) && (
+        <div className="absolute bottom-0 inset-x-0 translate-y-full group-hover:translate-y-0 transition-transform duration-200">
+          <div className="bg-gradient-to-t from-black/80 via-black/50 to-transparent pt-6 pb-2 px-2 flex gap-1.5">
+            {onSetProfile && (
+              <button
+                className={`flex-1 flex items-center justify-center gap-1 text-xs font-semibold py-1.5 rounded transition-colors ${
+                  isProfile ? 'bg-[#1877F2] text-white' : 'bg-black/50 hover:bg-[#1877F2]/80 text-white/90'
+                }`}
+                onClick={(e) => { e.stopPropagation(); onSetProfile(photo) }}
+                title="Set as profile photo"
+              >
+                <User className="w-3 h-3" />
+                Profile
+              </button>
+            )}
+            {onSetCover && (
+              <button
+                className={`flex-1 flex items-center justify-center gap-1 text-xs font-semibold py-1.5 rounded transition-colors ${
+                  isCover ? 'bg-emerald-500 text-white' : 'bg-black/50 hover:bg-emerald-500/80 text-white/90'
+                }`}
+                onClick={(e) => { e.stopPropagation(); onSetCover(photo) }}
+                title="Set as cover photo"
+              >
+                <LayoutDashboard className="w-3 h-3" />
+                Cover
+              </button>
+            )}
+          </div>
+        </div>
+      )}
     </motion.div>
   )
 }
@@ -495,11 +629,19 @@ function PhotoGrid({
   onPhotoClick,
   onDelete,
   onToggleFeatured,
+  onSetProfile,
+  onSetCover,
+  profileId,
+  coverId,
 }: {
   photos: Photo[]
   onPhotoClick: (p: Photo) => void
   onDelete?: (p: Photo) => void
   onToggleFeatured: (p: Photo) => void
+  onSetProfile?: (p: Photo) => void
+  onSetCover?: (p: Photo) => void
+  profileId?: string
+  coverId?: string
 }) {
   if (photos.length === 0) {
     return (
@@ -520,6 +662,10 @@ function PhotoGrid({
           onClick={() => onPhotoClick(photo)}
           onDelete={onDelete}
           onToggleFeatured={onToggleFeatured}
+          onSetProfile={onSetProfile}
+          onSetCover={onSetCover}
+          isProfile={profileId === photo.id}
+          isCover={coverId === photo.id}
         />
       ))}
     </div>
