@@ -30,7 +30,7 @@ export const viewport: Viewport = {
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={inter.variable}>
-      <body className="min-h-screen bg-[var(--background)] antialiased p-4 sm:p-6">
+      <body className="min-h-screen bg-[var(--background)] antialiased">
         <NextTopLoader
           color="var(--primary)"
           shadow={false}
