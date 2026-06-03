@@ -1,5 +1,6 @@
 import { Suspense } from 'react'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { GalleryClient } from './gallery-client'
 import { Skeleton } from '@/components/ui/skeleton'
 import type { Metadata } from 'next'
@@ -11,15 +12,12 @@ async function GalleryData() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: albums } = await supabase
-    .from('albums')
-    .select('*')
-    .order('created_at', { ascending: false })
-
-  const { data: photos } = await supabase
-    .from('photos')
-    .select('*')
-    .order('created_at', { ascending: false })
+  // Use admin client so all users see every uploaded photo (family vault)
+  const admin = createAdminClient()
+  const [{ data: albums }, { data: photos }] = await Promise.all([
+    admin.from('albums').select('*').order('created_at', { ascending: false }),
+    admin.from('photos').select('*').order('created_at', { ascending: false }),
+  ])
 
   return <GalleryClient albums={albums ?? []} photos={photos ?? []} userId={user.id} />
 }
