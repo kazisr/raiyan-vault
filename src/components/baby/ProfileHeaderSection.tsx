@@ -81,19 +81,36 @@ export function ProfileHeaderSection({
 
   // Restore saved photo selections from localStorage
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(STORAGE_KEY)
-      if (!saved) return
-      const prefs: { profileId?: string; coverId?: string } = JSON.parse(saved)
-      if (prefs.profileId) {
-        const found = allPhotos.find((p) => p.id === prefs.profileId)
-        if (found) setProfileUrl(found.url)
-      }
-      if (prefs.coverId) {
-        const found = allPhotos.find((p) => p.id === prefs.coverId)
-        if (found) setCoverUrl(found.url)
-      }
-    } catch {}
+    async function restorePrefs() {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY)
+        if (!saved) return
+        const prefs: { profileId?: string; profilePath?: string; coverId?: string; coverPath?: string } = JSON.parse(saved)
+
+        if (prefs.profileId) {
+          const found = allPhotos.find((p) => p.id === prefs.profileId)
+          if (found) {
+            setProfileUrl(found.url)
+          } else if (prefs.profilePath) {
+            const { createClient } = await import('@/lib/supabase/client')
+            const { data } = await createClient().storage.from('photos').createSignedUrl(prefs.profilePath, 3600)
+            if (data?.signedUrl) setProfileUrl(data.signedUrl)
+          }
+        }
+
+        if (prefs.coverId) {
+          const found = allPhotos.find((p) => p.id === prefs.coverId)
+          if (found) {
+            setCoverUrl(found.url)
+          } else if (prefs.coverPath) {
+            const { createClient } = await import('@/lib/supabase/client')
+            const { data } = await createClient().storage.from('photos').createSignedUrl(prefs.coverPath, 3600)
+            if (data?.signedUrl) setCoverUrl(data.signedUrl)
+          }
+        }
+      } catch {}
+    }
+    restorePrefs()
   }, [allPhotos])
 
   const selectPhoto = (slot: 'profile' | 'cover', photo: Photo) => {
