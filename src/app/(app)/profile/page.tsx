@@ -17,23 +17,18 @@ export default async function ProfilePage() {
   const admin = createAdminClient()
   const { data: { user } } = await supabase.auth.getUser()
 
-  const [
-    { data: profile },
-    { data: growthLogs },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    { data: vaultSettings },
-  ] = await Promise.all([
+  const [profileRes, growthRes, vaultRes] = await Promise.all([
     supabase
       .from('child_profiles')
       .select('*')
       .order('created_at', { ascending: true })
       .limit(1)
-      .single() as Promise<{ data: Child | null }>,
+      .single(),
     supabase
       .from('growth_logs')
       .select('*')
       .order('log_date', { ascending: false })
-      .limit(1) as Promise<{ data: GrowthLog[] | null }>,
+      .limit(1),
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (admin as any)
       .from('vault_settings')
@@ -42,8 +37,10 @@ export default async function ProfilePage() {
       .maybeSingle(),
   ])
 
+  const profile = profileRes.data as Child | null
+  const growthLogs = growthRes.data as GrowthLog[] | null
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const settings = vaultSettings as any
+  const settings = vaultRes.data as any
 
   async function resolveUrl(path: string | null | undefined): Promise<string | null> {
     if (!path) return null
