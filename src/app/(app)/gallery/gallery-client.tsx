@@ -1,6 +1,7 @@
 'use client'
 
 import React, { useState, useCallback, useEffect } from 'react'
+import { setVaultPhoto } from '@/app/actions/vault-settings'
 import { useDropzone } from 'react-dropzone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Upload, FolderOpen, Images, X, ChevronLeft, Loader2, ImageIcon, Trash2, Star, User, LayoutDashboard } from 'lucide-react'
@@ -150,6 +151,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
     setPhotoPrefs(updated)
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(updated)) } catch {}
     if (!photo.is_featured) await toggleFeatured(photo)
+    await setVaultPhoto('profile', photo.id, photo.storage_path)
     toast.success('Set as profile photo')
   }
 
@@ -158,6 +160,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
     setPhotoPrefs(updated)
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(updated)) } catch {}
     if (!photo.is_featured) await toggleFeatured(photo)
+    await setVaultPhoto('cover', photo.id, photo.storage_path)
     toast.success('Set as cover photo')
   }
 
@@ -411,93 +414,102 @@ function LightboxOverlay({
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-black/90 flex flex-col items-center justify-center"
       onClick={onClose}
     >
       <button
-        className="absolute top-4 right-4 text-white/80 hover:text-white p-2"
+        className="absolute top-3 right-3 z-10 w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-colors"
         onClick={onClose}
       >
         <X className="w-6 h-6" />
       </button>
 
-      {/* Featured toggle */}
-      <button
-        className={`absolute top-4 right-14 p-2 transition-colors ${
-          photo.is_featured ? 'text-amber-400 hover:text-amber-300' : 'text-white/50 hover:text-amber-400'
-        }`}
-        onClick={(e) => { e.stopPropagation(); onToggleFeatured(photo) }}
-        title={photo.is_featured ? 'Remove from featured' : 'Add to featured'}
+      {/* Top toolbar */}
+      <div
+        className="absolute top-0 inset-x-0 flex items-center justify-between px-3 pt-3 pb-2 z-10"
+        onClick={(e) => e.stopPropagation()}
       >
-        <Star className={`w-5 h-5 ${photo.is_featured ? 'fill-current' : ''}`} />
-      </button>
-
-      {onDelete && (
-        <button
-          className="absolute top-4 left-4 text-white/60 hover:text-red-400 p-2 transition-colors"
-          onClick={(e) => {
-            e.stopPropagation()
-            if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
-          }}
-          title="Delete photo"
-        >
-          <Trash2 className="w-5 h-5" />
-        </button>
-      )}
-
-      {url ? (
-        <motion.img
-          initial={{ scale: 0.9 }}
-          animate={{ scale: 1 }}
-          src={url}
-          alt={photo.caption ?? 'Photo'}
-          className="max-w-full max-h-full rounded-[var(--radius-lg)] object-contain"
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
-        <Loader2 className="w-8 h-8 text-white animate-spin" />
-      )}
-
-      {/* Set as profile / cover buttons */}
-      {(onSetProfile || onSetCover) && (
-        <div
-          className="absolute bottom-14 left-1/2 -translate-x-1/2 flex gap-2"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {onSetProfile && (
+        <div className="flex gap-1">
+          {onDelete && (
             <button
-              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
-                isProfile
-                  ? 'bg-[#1877F2] text-white border-[#1877F2]'
-                  : 'bg-black/40 hover:bg-[#1877F2]/80 text-white/80 hover:text-white border-white/20'
-              }`}
-              onClick={() => onSetProfile(photo)}
+              className="w-9 h-9 rounded-full bg-white/10 hover:bg-red-500/70 flex items-center justify-center text-white/70 hover:text-white transition-colors"
+              onClick={() => {
+                if (window.confirm('Delete this photo? This cannot be undone.')) onDelete(photo)
+              }}
+              title="Delete photo"
             >
-              <User className="w-3.5 h-3.5" />
-              {isProfile ? '✓ Profile Photo' : 'Set as Profile'}
-            </button>
-          )}
-          {onSetCover && (
-            <button
-              className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
-                isCover
-                  ? 'bg-emerald-500 text-white border-emerald-500'
-                  : 'bg-black/40 hover:bg-emerald-500/80 text-white/80 hover:text-white border-white/20'
-              }`}
-              onClick={() => onSetCover(photo)}
-            >
-              <LayoutDashboard className="w-3.5 h-3.5" />
-              {isCover ? '✓ Cover Photo' : 'Set as Cover'}
+              <Trash2 className="w-4 h-4" />
             </button>
           )}
         </div>
-      )}
+        <button
+          className={`w-9 h-9 rounded-full flex items-center justify-center transition-colors ${
+            photo.is_featured ? 'bg-amber-400/80 text-white' : 'bg-white/10 hover:bg-amber-400/60 text-white/60 hover:text-white'
+          }`}
+          onClick={() => onToggleFeatured(photo)}
+          title={photo.is_featured ? 'Remove from featured' : 'Add to featured'}
+        >
+          <Star className={`w-4 h-4 ${photo.is_featured ? 'fill-current' : ''}`} />
+        </button>
+      </div>
 
-      {photo.caption && (
-        <p className="absolute bottom-6 left-1/2 -translate-x-1/2 text-white/70 text-sm bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-sm">
-          {photo.caption}
-        </p>
-      )}
+      {/* Image — fixed max dimensions so portrait photos don't overflow on mobile */}
+      <div className="flex items-center justify-center w-full px-4" style={{ maxHeight: 'calc(100vh - 130px)' }}>
+        {url ? (
+          <motion.img
+            initial={{ scale: 0.9 }}
+            animate={{ scale: 1 }}
+            src={url}
+            alt={photo.caption ?? 'Photo'}
+            className="max-w-full max-h-[calc(100vh-130px)] w-auto h-auto rounded-[var(--radius-lg)] object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        ) : (
+          <Loader2 className="w-8 h-8 text-white animate-spin" />
+        )}
+      </div>
+
+      {/* Bottom bar: caption + profile/cover actions */}
+      <div
+        className="absolute bottom-0 inset-x-0 px-4 pb-4 pt-2 flex flex-col items-center gap-2"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {photo.caption && (
+          <p className="text-white/70 text-sm bg-black/40 px-4 py-1.5 rounded-full backdrop-blur-sm text-center">
+            {photo.caption}
+          </p>
+        )}
+        {(onSetProfile || onSetCover) && (
+          <div className="flex gap-2 flex-wrap justify-center">
+            {onSetProfile && (
+              <button
+                className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
+                  isProfile
+                    ? 'bg-[#1877F2] text-white border-[#1877F2]'
+                    : 'bg-black/40 hover:bg-[#1877F2]/80 text-white/80 hover:text-white border-white/20'
+                }`}
+                onClick={() => onSetProfile(photo)}
+              >
+                <User className="w-3.5 h-3.5" />
+                {isProfile ? '✓ Profile Photo' : 'Set as Profile'}
+              </button>
+            )}
+            {onSetCover && (
+              <button
+                className={`flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-full border transition-colors ${
+                  isCover
+                    ? 'bg-emerald-500 text-white border-emerald-500'
+                    : 'bg-black/40 hover:bg-emerald-500/80 text-white/80 hover:text-white border-white/20'
+                }`}
+                onClick={() => onSetCover(photo)}
+              >
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                {isCover ? '✓ Cover Photo' : 'Set as Cover'}
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </motion.div>
   )
 }
