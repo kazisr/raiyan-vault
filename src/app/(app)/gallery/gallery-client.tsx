@@ -47,7 +47,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   const [albumName, setAlbumName] = useState('')
   const [uploading, setUploading] = useState(false)
   const [uploadFiles, setUploadFiles] = useState<File[]>([])
-  const [photoPrefs, setPhotoPrefs] = useState<{ profileId?: string; coverId?: string }>({})
+  const [photoPrefs, setPhotoPrefs] = useState<{ profileId?: string; profilePath?: string; coverId?: string; coverPath?: string }>({})
 
   const supabase = createClient()
   const { hasPermission } = usePermissions()
@@ -146,7 +146,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   }
 
   async function setAsProfilePhoto(photo: Photo) {
-    const updated = { ...photoPrefs, profileId: photo.id }
+    const updated = { ...photoPrefs, profileId: photo.id, profilePath: photo.storage_path }
     setPhotoPrefs(updated)
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(updated)) } catch {}
     if (!photo.is_featured) await toggleFeatured(photo)
@@ -154,7 +154,7 @@ export function GalleryClient({ albums: initAlbums, photos: initPhotos, userId }
   }
 
   async function setAsCoverPhoto(photo: Photo) {
-    const updated = { ...photoPrefs, coverId: photo.id }
+    const updated = { ...photoPrefs, coverId: photo.id, coverPath: photo.storage_path }
     setPhotoPrefs(updated)
     try { localStorage.setItem(PREFS_KEY, JSON.stringify(updated)) } catch {}
     if (!photo.is_featured) await toggleFeatured(photo)
