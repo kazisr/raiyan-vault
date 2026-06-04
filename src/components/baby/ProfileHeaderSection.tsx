@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { Camera, ZoomIn, X, Check } from 'lucide-react'
 import { formatDate } from '@/utils/age'
 import { CHILD_BIO } from '@/constants/child'
+import { setVaultPhoto } from '@/app/actions/vault-settings'
 
 interface Photo {
   id: string
   url: string
   caption?: string | null
+  storage_path?: string
 }
 
 interface ProfileHeaderSectionProps {
@@ -113,18 +115,25 @@ export function ProfileHeaderSection({
     restorePrefs()
   }, [allPhotos])
 
-  const selectPhoto = (slot: 'profile' | 'cover', photo: Photo) => {
+  const selectPhoto = async (slot: 'profile' | 'cover', photo: Photo) => {
     try {
       const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}')
       if (slot === 'profile') {
         setProfileUrl(photo.url)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saved, profileId: photo.id }))
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          ...saved, profileId: photo.id, profilePath: photo.storage_path,
+        }))
       } else {
         setCoverUrl(photo.url)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify({ ...saved, coverId: photo.id }))
+        localStorage.setItem(STORAGE_KEY, JSON.stringify({
+          ...saved, coverId: photo.id, coverPath: photo.storage_path,
+        }))
       }
     } catch {}
     setSelector(null)
+    if (photo.storage_path) {
+      setVaultPhoto(slot, photo.id, photo.storage_path).catch(() => {})
+    }
   }
 
   const lightboxUrl = lightbox === 'profile' ? profileUrl : coverUrl

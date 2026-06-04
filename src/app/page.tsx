@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { Heart, LogIn } from 'lucide-react'
 import Link from 'next/link'
 import { CHILD_NAME, CHILD_DOB, CHILD_NICKNAME } from '@/constants/child'
@@ -24,6 +25,7 @@ function createPublicClient() {
 
 export default async function PublicDashboardPage() {
   const supabase = createPublicClient()
+  const admin = createAdminClient()
 
   const [
     { data: photos },
@@ -32,6 +34,8 @@ export default async function PublicDashboardPage() {
     { data: events },
     { count: visitCount },
     { count: blogCount },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    { data: vaultSettings },
   ] = await Promise.all([
     supabase
       .from('photos')
@@ -46,6 +50,12 @@ export default async function PublicDashboardPage() {
     supabase.from('events').select('*').order('event_date', { ascending: false }).limit(5),
     supabase.from('doctor_visits').select('id', { count: 'exact', head: true }),
     supabase.from('blog_posts').select('id', { count: 'exact', head: true }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    (admin as any)
+      .from('vault_settings')
+      .select('profile_photo_path, cover_photo_path')
+      .eq('id', 1)
+      .maybeSingle(),
   ])
 
   const photosWithUrls = await Promise.all(
@@ -59,7 +69,26 @@ export default async function PublicDashboardPage() {
 
   const carouselPhotos = photosWithUrls
     .filter((p) => p.url !== null)
-    .map((p) => ({ id: p.id, url: p.url!, caption: p.caption }))
+    .map((p) => ({ id: p.id, url: p.url!, caption: p.caption, storage_path: p.storage_path }))
+
+  // Resolve profile/cover from vault_settings, falling back to first carousel photo
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const settings = vaultSettings as any
+
+  async function resolveUrl(path: string | null | undefined): Promise<string | null> {
+    if (!path) return null
+    // Try from carousel first (already signed)
+    const cached = carouselPhotos.find((p) => p.storage_path === path)
+    if (cached) return cached.url
+    // Generate a new signed URL for this path
+    const { data } = await admin.storage.from('photos').createSignedUrl(path, 3600)
+    return data?.signedUrl ?? null
+  }
+
+  const [initialProfileUrl, initialCoverUrl] = await Promise.all([
+    resolveUrl(settings?.profile_photo_path),
+    resolveUrl(settings?.cover_photo_path),
+  ])
 
   const balances = (['BDT', 'JPY'] as const).map((currency) => {
     const rows = (ledgerEntries ?? []).filter((e) => e.currency === currency)
@@ -101,11 +130,9 @@ export default async function PublicDashboardPage() {
       </nav>
 
       <div className="max-w-[1280px] mx-auto">
-
-        {/* Cover + Profile Info — client component (lightbox, photo selector, auth check) */}
         <ProfileHeaderSection
-          initialCoverUrl={carouselPhotos[0]?.url ?? null}
-          initialProfileUrl={carouselPhotos[0]?.url ?? null}
+          initialCoverUrl={initialCoverUrl ?? carouselPhotos[0]?.url ?? null}
+          initialProfileUrl={initialProfileUrl ?? carouselPhotos[0]?.url ?? null}
           allPhotos={carouselPhotos}
           childName={CHILD_NAME}
           childDob={CHILD_DOB}
@@ -116,7 +143,6 @@ export default async function PublicDashboardPage() {
           postCount={totalPosts}
         />
 
-        {/* Tabs + Feed — client component (All / Photos / Reels) */}
         <ProfileContent
           carouselPhotos={carouselPhotos}
           vaccines={vaccines ?? []}

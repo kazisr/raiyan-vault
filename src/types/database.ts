@@ -408,6 +408,33 @@ export interface Database {
         }
         Relationships: []
       }
+      vault_settings: {
+        Row: {
+          id: number
+          profile_photo_id: string | null
+          profile_photo_path: string | null
+          cover_photo_id: string | null
+          cover_photo_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          id?: number
+          profile_photo_id?: string | null
+          profile_photo_path?: string | null
+          cover_photo_id?: string | null
+          cover_photo_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          id?: number
+          profile_photo_id?: string | null
+          profile_photo_path?: string | null
+          cover_photo_id?: string | null
+          cover_photo_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
